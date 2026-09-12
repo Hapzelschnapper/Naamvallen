@@ -161,6 +161,20 @@
   .next-btn.show{display:inline-block;}
 
   .placeholder{text-align:center;padding:40px 20px;color:var(--ink-faint);}
+
+  .start-screen{padding:20px 0 10px;}
+  .start-intro{text-align:center;color:var(--ink-dim);font-size:1.05rem;margin-bottom:22px;}
+  .start-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:480px){.start-grid{grid-template-columns:1fr;}}
+  .start-btn{
+    --sc: var(--gold);
+    background:var(--card);border:1px solid var(--sc);border-radius:var(--radius);
+    padding:26px 18px;text-align:center;cursor:pointer;color:var(--ink);font-family:'Nunito',sans-serif;
+    transition:transform .12s, box-shadow .12s;
+  }
+  .start-btn:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.35);}
+  .start-btn strong{display:block;font-family:'Cinzel',serif;font-size:1.3rem;color:var(--sc);margin-bottom:6px;}
+  .start-btn span{color:var(--ink-faint);font-size:.85rem;}
   .placeholder .big{font-family:'Cinzel',serif;color:var(--gold);font-size:1.1rem;margin-bottom:8px;}
 
   footer{text-align:center;color:var(--ink-faint);font-size:.8rem;margin-top:50px;}
@@ -168,10 +182,10 @@
 </style>
 </head>
 <body>
-<div class="version-badge">v1.36</div>
+<div class="version-badge">v1.39</div>
 <div class="wrap">
   <header>
-    <h1>Naamvallen &amp; Werkwoorden</h1>
+    <h1 id="app-title" style="cursor:pointer;">Naamvallen, Werkwoorden &amp; Woorden</h1>
     <p class="subtitle">Grammatica oefenen in het Latijn, Duits en Frans — en het Griekse alfabet</p>
     <nav class="pillnav" id="lang-nav"></nav>
     <nav class="pillnav sub" id="topic-nav"></nav>
@@ -3895,7 +3909,7 @@ const EL_ALFABET = [
   {"order": 15, "upper": "Ο", "lower": "ο", "name": "omikron", "translit": "o", "sound": "o", "ex": "ὄνομα", "exNl": "naam", "confusable": ["Ω", "ω"], "looksLike": "", "note": "Omikron is kort, omega (letter 24) is lang — beide zien er rond uit, dus makkelijk te verwarren."},
   {"order": 16, "upper": "Π", "lower": "π", "name": "pi", "translit": "p", "sound": "p", "ex": "πατήρ", "exNl": "vader", "confusable": ["Γ", "γ"], "looksLike": "", "note": ""},
   {"order": 17, "upper": "Ρ", "lower": "ρ", "name": "rho", "translit": "r", "sound": "r", "ex": "ῥίπτω", "exNl": "werpen, gooien", "confusable": [], "looksLike": "P (LET OP: klinkt NIET als 'p', maar als 'r' — klassieke valse vriend)", "note": ""},
-  {"order": 18, "upper": "Σ", "lower": "σ (begin/midden van woord) / ς (einde van woord)", "name": "sigma", "translit": "s", "sound": "s", "ex": "σῖτος", "exNl": "eten, voedsel", "confusable": [], "looksLike": "", "note": "Enige Griekse letter met twee verschillende kleine-lettervormen: σ aan het begin/midden van een woord, ς aan het eind — bijv. βάσις."},
+  {"order": 18, "upper": "Σ", "lower": "σ / ς", "name": "sigma", "translit": "s", "sound": "s", "ex": "σῖτος", "exNl": "eten, voedsel", "confusable": [], "looksLike": "", "note": "Enige Griekse letter met twee verschillende kleine-lettervormen: σ aan het begin/midden van een woord, ς aan het eind — bijv. βάσις."},
   {"order": 19, "upper": "Τ", "lower": "τ", "name": "tau", "translit": "t", "sound": "t", "ex": "τιμή", "exNl": "eer, eerbewijs", "confusable": [], "looksLike": "", "note": ""},
   {"order": 20, "upper": "Υ", "lower": "υ", "name": "upsilon", "translit": "u", "sound": "uu/u", "ex": "υἱός", "exNl": "zoon", "confusable": [], "looksLike": "Y (klinkt niet als Nederlandse 'y', maar als Franse 'u')", "note": ""},
   {"order": 21, "upper": "Φ", "lower": "φ", "name": "phi", "translit": "ph", "sound": "ph/f (oorspronkelijk uitgesproken als in het Engels 'power')", "ex": "φίλος", "exNl": "vriend", "confusable": ["Θ", "θ"], "looksLike": "", "note": ""},
@@ -3929,6 +3943,7 @@ function elTransliterate(word){
 let currentLang = 'la';
 let currentTopic = 'nouns';
 let currentView = 'leren';
+let showStart = true;
 
 const LANGS = [ {id:'la', label:'Latijn'}, {id:'de', label:'Duits'}, {id:'fr', label:'Frans'}, {id:'el', label:'Grieks'} ];
 const TOPICS_NORMAL = [ {id:'nouns', label:'Zelfstandige naamwoorden'}, {id:'verbs', label:'Werkwoorden'}, {id:'vocab', label:'Vocabulaire'} ];
@@ -3960,6 +3975,7 @@ LANGS.forEach(l=>{
 
 function renderNav(){
   document.body.dataset.lang = currentLang;
+  langNav.style.display = 'flex';
   Array.from(langNav.children).forEach(b=>b.classList.toggle('active', b.dataset.id===currentLang));
 
   topicNav.innerHTML = '';
@@ -4416,8 +4432,20 @@ function initElAlfabetOefenen(wrapId){
   const modeGrid = root.querySelector('[data-role="mode-grid"]');
   const modeContent = root.querySelector('[data-role="mode-content"]');
 
-  const lettersCat = { letters: { title:'Letters en namen', sub:'', words: EL_ALFABET.map(l=>({ greek:`${l.upper} ${l.lower}`, nl: l.name })), vocabOnly:true } };
-  const uitspraakCat = { uitspraak: { title:'Uitspraak', sub:'', words: EL_ALFABET.map(l=>({ greek:`${l.upper} ${l.lower}`, nl: l.sound })), vocabOnly:true } };
+  function expandForQuiz(field){
+    const out = [];
+    EL_ALFABET.forEach(l=>{
+      if(l.name==='sigma'){
+        out.push({ greek: `${l.upper} σ`, nl: field(l) });
+        out.push({ greek: `ς`, nl: field(l) });
+      } else {
+        out.push({ greek: `${l.upper} ${l.lower}`, nl: field(l) });
+      }
+    });
+    return out;
+  }
+  const lettersCat = { letters: { title:'Letters en namen', sub:'', words: expandForQuiz(l=>l.name), vocabOnly:true } };
+  const uitspraakCat = { uitspraak: { title:'Uitspraak', sub:'', words: expandForQuiz(l=>l.sound), vocabOnly:true } };
   const translitCat = { translit: { title:'Transliteratie', sub:'', words: EL_ALFABET.map(l=>({ greek: l.ex, nl: elTransliterate(l.ex), bonus: l.exNl })), vocabOnly:true } };
 
   Array.from(modeGrid.querySelectorAll('.cat-btn')).forEach(btn=>{
@@ -4459,7 +4487,7 @@ function initMatchingGame(container){
     const chosen = shuffle([...EL_ALFABET]).slice(0, PAIR_COUNT);
     const tiles = shuffle([
       ...chosen.map(l=>({ key:l.name, form:'upper', text:l.upper })),
-      ...chosen.map(l=>({ key:l.name, form:'lower', text:l.lower }))
+      ...chosen.map(l=>({ key:l.name, form:'lower', text: l.name==='sigma' ? 'σ' : l.lower }))
     ]);
     let matchedCount = 0;
     let firstPick = null;
@@ -4870,7 +4898,41 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
 }
 
 /* ================= MASTER RENDER ================= */
+function renderStartScreen(){
+  document.body.dataset.lang = '';
+  langNav.style.display = 'none';
+  topicNav.innerHTML = ''; viewNav.innerHTML = '';
+  const wrapId = 'start-' + Math.random().toString(36).slice(2,8);
+  setTimeout(()=>{
+    const root = document.getElementById(wrapId);
+    if(!root) return;
+    root.querySelectorAll('.start-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        currentLang = btn.dataset.id;
+        const topics = currentTopics();
+        currentTopic = topics[0].id;
+        currentView = 'leren';
+        showStart = false;
+        render();
+      });
+    });
+  }, 0);
+  return `<div id="${wrapId}" class="start-screen">
+    <p class="start-intro">Welke taal wil je oefenen?</p>
+    <div class="start-grid">
+      <button class="start-btn" data-id="la" style="--sc:var(--lang-la);"><strong>Latijn</strong><span>Naamvallen, werkwoorden vervoegen &amp; woorden</span></button>
+      <button class="start-btn" data-id="de" style="--sc:var(--lang-de);"><strong>Duits</strong><span>Naamvallen, werkwoorden vervoegen &amp; woorden</span></button>
+      <button class="start-btn" data-id="fr" style="--sc:var(--lang-fr);"><strong>Frans</strong><span>Werkwoorden vervoegen &amp; woorden</span></button>
+      <button class="start-btn" data-id="el" style="--sc:var(--lang-el);"><strong>Grieks</strong><span>Het alfabet</span></button>
+    </div>
+  </div>`;
+}
+
 function render(){
+  if(showStart){
+    content.innerHTML = renderStartScreen();
+    return;
+  }
   renderNav();
   let html = '';
   if(currentLang==='el'){
@@ -4891,6 +4953,8 @@ function render(){
   }
   content.innerHTML = html;
 }
+
+document.getElementById('app-title').addEventListener('click', ()=>{ showStart = true; render(); });
 
 render();
 
