@@ -182,7 +182,7 @@
 </style>
 </head>
 <body>
-<div class="version-badge">v1.39</div>
+<div class="version-badge">v1.41</div>
 <div class="wrap">
   <header>
     <h1 id="app-title" style="cursor:pointer;">Naamvallen, Werkwoorden &amp; Woorden</h1>
@@ -4375,7 +4375,7 @@ function elAlfabetLeren(){
       <td>${l.name}</td>
     </tr>
     <tr class="alfabet-detail" data-idx="${i}" style="display:none;">
-      <td colspan="3">${l.sound}</td>
+      <td colspan="3">${l.sound}${l.note ? `<br><em style="color:var(--ink-faint);">${l.note}</em>` : ''}</td>
     </tr>`).join('');
 
   const sigma = EL_ALFABET.find(l=>l.name==='sigma');
@@ -4444,7 +4444,20 @@ function initElAlfabetOefenen(wrapId){
     });
     return out;
   }
-  const lettersCat = { letters: { title:'Letters en namen', sub:'', words: expandForQuiz(l=>l.name), vocabOnly:true } };
+  function expandLettersSeparate(){
+    const out = [];
+    EL_ALFABET.forEach(l=>{
+      out.push({ greek: l.upper, nl: l.name });
+      if(l.name==='sigma'){
+        out.push({ greek: 'σ', nl: l.name });
+        out.push({ greek: 'ς', nl: l.name });
+      } else {
+        out.push({ greek: l.lower, nl: l.name });
+      }
+    });
+    return out;
+  }
+  const lettersCat = { letters: { title:'Letters en namen', sub:'', words: expandLettersSeparate(), vocabOnly:true } };
   const uitspraakCat = { uitspraak: { title:'Uitspraak', sub:'', words: expandForQuiz(l=>l.sound), vocabOnly:true } };
   const translitCat = { translit: { title:'Transliteratie', sub:'', words: EL_ALFABET.map(l=>({ greek: l.ex, nl: elTransliterate(l.ex), bonus: l.exNl })), vocabOnly:true } };
 
