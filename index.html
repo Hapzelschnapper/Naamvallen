@@ -182,7 +182,7 @@
 </style>
 </head>
 <body>
-<div class="version-badge">v1.41</div>
+<div class="version-badge">v1.42</div>
 <div class="wrap">
   <header>
     <h1 id="app-title" style="cursor:pointer;">Naamvallen, Werkwoorden &amp; Woorden</h1>
@@ -355,7 +355,7 @@ function verbFormsLA(word, engineFn){
 }
 
 const LA_VOCAB = [
-  { title: "Hoofdstuk 1", words: [
+  { title: "Hoofdstuk 1 - Lupa", words: [
     {lat:"pastor / pastores", nl:"herder"},
     {lat:"esse", nl:"zijn (infinitivus)"},
     {lat:"grex / greges", nl:"kudde"},
@@ -388,6 +388,8 @@ const LA_VOCAB = [
     {lat:"mater / matres", nl:"moeder"},
     {lat:"sicut", nl:"zoals"},
     {lat:"pater / patres", nl:"vader"},
+  ]},
+  { title: "Hoofdstuk 1 - Regnum", words: [
     {lat:"amicus", nl:"vriend"},
     {lat:"de (+abl)", nl:"van(af) / over"},
     {lat:"mons / montes", nl:"berg / heuvel"},
@@ -434,11 +436,14 @@ const LA_VOCAB = [
     {lat:"civis / cives", nl:"burger"},
     {lat:"sed", nl:"maar"},
     {lat:"gladius", nl:"zwaard"},
+  ]},
+  { title: "Hoofdstuk 1 - Flumen", words: [
     {lat:"flumen / flumina", nl:"rivier"},
     {lat:"rex / reges", nl:"koning"},
     {lat:"servus", nl:"slaaf"},
     {lat:"vocare", nl:"roepen / noemen"},
     {lat:"venire", nl:"komen"},
+    {lat:"infans / infantes", nl:"baby"},
     {lat:"audire", nl:"horen"},
     {lat:"corbis / corbes", nl:"mandje"},
     {lat:"vid\u00ebre", nl:"zien"},
@@ -471,10 +476,13 @@ const LA_VOCAB = [
     {lat:"fluere", nl:"stromen"},
     {lat:"ibi", nl:"daar"},
     {lat:"haer\u00ebre", nl:"blijven steken"},
+  ]},
+  { title: "Hoofdstuk 1 - Numen deorum", words: [
     {lat:"Castor / gen Castoris", nl:"Castor"},
     {lat:"Pollux / gen Pollucis", nl:"Pollux"},
     {lat:"bellum", nl:"oorlog"},
     {lat:"gerere", nl:"dragen / voeren"},
+    {lat:"facile est", nl:"het is gemakkelijk"},
     {lat:"victoria", nl:"overwinning"},
     {lat:"parere", nl:"behalen"},
     {lat:"dux / duces", nl:"aanvoerder / leider"},
@@ -494,6 +502,7 @@ const LA_VOCAB = [
     {lat:"eventus", nl:"uitkomst"},
     {lat:"exspectare", nl:"wachten (op)"},
     {lat:"forum", nl:"forum / marktplaats"},
+    {lat:"omnes (mv)", nl:"allen"},
     {lat:"pro +abl", nl:"voor / in plaats van"},
     {lat:"vita", nl:"(het) leven"},
     {lat:"maritus", nl:"echtgenoot"},
@@ -518,6 +527,8 @@ const LA_VOCAB = [
     {lat:"necesse est", nl:"het is nodig"},
     {lat:"scilicet", nl:"natuurlijk"},
     {lat:"narraverunt", nl:"(zij) hebben verteld"},
+  ]},
+  { title: "Hoofdstuk 1 - Capitolium", words: [
     {lat:"Roma", nl:"Rome"},
     {lat:"periculum", nl:"gevaar"},
     {lat:"Gallus", nl:"Galli\u00ebr"},
@@ -532,11 +543,13 @@ const LA_VOCAB = [
     {lat:"semper", nl:"altijd"},
     {lat:"retin\u00ebre", nl:"tegenhouden"},
     {lat:"ad se", nl:"bij zich"},
+    {lat:"facile est", nl:"het is gemakkelijk"},
     {lat:"fastigium", nl:"(berg)top"},
     {lat:"melius est", nl:"het is beter"},
     {lat:"nox / noctes", nl:"nacht"},
     {lat:"ascendere", nl:"beklimmen"},
     {lat:"dormire", nl:"slapen"},
+    {lat:"omnes (mv)", nl:"allen"},
     {lat:"vigilare", nl:"wakker zijn / waken"},
     {lat:"pars / partes", nl:"deel"},
     {lat:"custos / custodes", nl:"bewaker"},
@@ -557,6 +570,8 @@ const LA_VOCAB = [
     {lat:"alius", nl:"een ander"},
     {lat:"auxilium", nl:"hulp"},
     {lat:"servare", nl:"redden"},
+  ]},
+  { title: "Hoofdstuk 1 - Castor et Pollux", words: [
     {lat:"ignis / ignes", nl:"vuur"},
     {lat:"Virgo Vestalis", nl:"Vestaalse Maagd"},
     {lat:"per +acc", nl:"door(heen) / gedurende"},
@@ -610,7 +625,7 @@ const LA_VOCAB = [
     {lat:"mox", nl:"spoedig"},
     {lat:"absolvere a +abl", nl:"vrijspreken van"},
   ]},
-  { title: "Hoofdstuk 2", words: [
+  { title: "Hoofdstuk 2 - Theatrum", words: [
     {lat:"trans + acc", nl:"over, aan de overzijde van"},
     {lat:"Rhenus", nl:"Rijn"},
     {lat:"Frisli", nl:"Friezen"},
@@ -658,6 +673,8 @@ const LA_VOCAB = [
     {lat:"fabula", nl:"verhaal"},
     {lat:"susurrans", nl:"fluisterend"},
     {lat:"credere + dat", nl:"geloven"},
+  ]},
+  { title: "Hoofdstuk 2 - Pugna", words: [
     {lat:"intervallum", nl:"pauze"},
     {lat:"purgare", nl:"schoonmaken"},
     {lat:"bestia", nl:"wild dier"},
@@ -699,7 +716,11 @@ const LA_VOCAB = [
     {lat:"adhuc", nl:"nog, tot nu toe"},
     {lat:"victor, victores", nl:"(over)winnaar"},
     {lat:"pollicem premere", nl:"de duim met de andere vingers omsloten houden"},
+  ]},
+  { title: "Hoofdstuk 2 - Gladiatores", words: [
     {lat:"dies festus", nl:"feestdag"},
+  ]},
+  { title: "Hoofdstuk 2 - Circus Maximus", words: [
     {lat:"Diocles, gen Dioclis", nl:"Diocles"},
     {lat:"auriga", nl:"wagenmenner"},
     {lat:"quadriga", nl:"wagen (met vierspan)"},
@@ -746,6 +767,8 @@ const LA_VOCAB = [
     {lat:"fui", nl:"pf van esse"},
     {lat:"dexterius", nl:"handiger, behendiger"},
     {lat:"gratia", nl:"populariteit"},
+  ]},
+  { title: "Hoofdstuk 2 - Spectacula", words: [
     {lat:"homo, homines", nl:"mens, man"},
     {lat:"cavea", nl:"toeschouwersruimte"},
     {lat:"valeria", nl:"zeilen, zonnescherm"},
@@ -760,6 +783,7 @@ const LA_VOCAB = [
     {lat:"longe,", nl:"ver (weg), verreweg"},
     {lat:"a/ab +abl", nl:"vanaf, door"},
     {lat:"procedere", nl:"voortgaan, lopen"},
+    {lat:"scutum", nl:"schild"},
     {lat:"tribunal, -alia", nl:"podium, loge"},
     {lat:"Caesar, gen-ris", nl:"de Keizer"},
     {lat:"salutare", nl:"(be)groeten"},
@@ -767,6 +791,7 @@ const LA_VOCAB = [
     {lat:"morituri", nl:"zij die gaan sterven"},
     {lat:"plaudere", nl:"klappen"},
     {lat:"exsultare", nl:"juichen"},
+    {lat:"bestia", nl:"wild dier"},
     {lat:"leo, leones", nl:"leeuw"},
     {lat:"panthera", nl:"panter"},
     {lat:"cervus", nl:"hert"},
@@ -774,6 +799,7 @@ const LA_VOCAB = [
     {lat:"frustra", nl:"tevergeefs"},
     {lat:"strepitus horribilis", nl:"huiveringwekkend lawaai"},
     {lat:"terra", nl:"grond"},
+    {lat:"rub\u0113re", nl:"rood zijn"},
     {lat:"resistere", nl:"weerstand bieden"},
     {lat:"caput, capita", nl:"hoofd"},
     {lat:"pes, pedes", nl:"voet, poot"},
@@ -783,6 +809,8 @@ const LA_VOCAB = [
     {lat:"enim", nl:"immers, want"},
     {lat:"clausos", nl:"gesloten"},
     {lat:"ten\u0113re", nl:"(vast)houden"},
+  ]},
+  { title: "Hoofdstuk 2 - Triumphus", words: [
     {lat:"filsa", nl:"dochter"},
     {lat:"sub + abl", nl:"onder"},
     {lat:"columna", nl:"zuil"},
@@ -826,12 +854,13 @@ const LA_VOCAB = [
     {lat:"Imperator, -ores", nl:"Bevelhebber"},
     {lat:"hic", nl:"hier"},
     {lat:"ante +acc", nl:"voor"},
+    {lat:"tuba", nl:"trompet"},
     {lat:"pompa", nl:"optocht"},
     {lat:"nonne", nl:"(toch) zeker wel"},
     {lat:"io", nl:"hoera"},
     {lat:"respirare", nl:"zuchten (van verlichting)"},
   ]},
-  { title: "Hoofdstuk 3", words: [
+  { title: "Hoofdstuk 3 - Servi", words: [
     {lat:"iussi", nl:"(pf van) iub\u00ebre"},
     {lat:"acta diurna (mv)", nl:"nieuwsberichten"},
     {lat:"legere", nl:"lezen"},
@@ -875,6 +904,8 @@ const LA_VOCAB = [
     {lat:"provocare ad", nl:"uitdagen tot"},
     {lat:"minimus -a -um", nl:"kleinst / zeer klein"},
     {lat:"momentum", nl:"duw / stoot"},
+  ]},
+  { title: "Hoofdstuk 3 - Funus", words: [
     {lat:"funus / funera", nl:"begrafenis"},
     {lat:"tristis -e", nl:"droevig / somber"},
     {lat:"sollemnis -e", nl:"plechtig"},
@@ -925,6 +956,8 @@ const LA_VOCAB = [
     {lat:"rite", nl:"volgens de voorgeschreven ceremonie"},
     {lat:"celer / celeris / celere", nl:"snel"},
     {lat:"impatiens / impatient", nl:"ongeduldig"},
+  ]},
+  { title: "Hoofdstuk 3 - Spartacus", words: [
     {lat:"lanista", nl:"gladiatorentrainer"},
     {lat:"constitui", nl:"(pf van) constituere"},
     {lat:"constituere", nl:"besluiten"},
@@ -968,6 +1001,8 @@ const LA_VOCAB = [
     {lat:"cadaver / cadavera", nl:"lijk / resten"},
     {lat:"in conspectu esse", nl:"te zien zijn"},
     {lat:"quasi admonitio", nl:"als waarschuwing"},
+  ]},
+  { title: "Hoofdstuk 3 - Toga virilis", words: [
     {lat:"dies festus", nl:"feestdag"},
     {lat:"toga virilis sumpta", nl:"ontvangst van de toga virilis"},
     {lat:"mane", nl:"'s ochtends vroeg"},
@@ -1011,6 +1046,8 @@ const LA_VOCAB = [
     {lat:"tradidi", nl:"(pf van) tradere"},
     {lat:"illustris -e", nl:"aanzienlijk / beroemd"},
     {lat:"slaus et felicitas", nl:"heil zegen"},
+  ]},
+  { title: "Hoofdstuk 3 - Matrona", words: [
     {lat:"matrona", nl:"matrona / vrouw des huizes"},
     {lat:"meus -a", nl:"um  - mijn, van mij"},
     {lat:"novus -a -um", nl:"nieuw"},
@@ -1036,6 +1073,7 @@ const LA_VOCAB = [
     {lat:"suus -a -um", nl:"zijn (eigen) / haar (eigen) / hun (eigen)"},
     {lat:"bonus -a -um", nl:"goed"},
     {lat:"officium summum", nl:"belangrijkste plicht"},
+    {lat:"memoria (abl)", nl:"in herinnering"},
     {lat:"magnus -a -um", nl:"groot"},
     {lat:"visitare", nl:"bezoeken"},
     {lat:"gemma", nl:"edelsteen / juweel"},
@@ -1057,6 +1095,8 @@ const LA_VOCAB = [
     {lat:"unu -a -um", nl:"\u00e9\u00e9n"},
     {lat:"consilium", nl:"plant / besluit"},
     {lat:"carus -a -um", nl:"geliefd"},
+  ]},
+  { title: "Hoofdstuk 3 - Fugitivus", words: [
     {lat:"maximus -a -um", nl:"grootst / zeer groot"},
     {lat:"crudelis -e", nl:"wreed"},
     {lat:"ferox / feroc", nl:"woest / onstuimig"},
@@ -1067,6 +1107,7 @@ const LA_VOCAB = [
     {lat:"parum", nl:"niet genoeg"},
     {lat:"audax / audac", nl:"moedig / roekeloos"},
     {lat:"occidere", nl:"doodgaan / sterven"},
+    {lat:"se (acc)", nl:"zich(zelf)"},
     {lat:"altus -a -um", nl:"hoog / diep"},
     {lat:"impetus", nl:"aanval"},
     {lat:"cauda", nl:"staart"},
@@ -1099,6 +1140,7 @@ const LA_VOCAB = [
     {lat:"tribuere", nl:"toekennen"},
   ]},
 ];
+
 
 const LA_CONJ1 = [['am','houden van'],['laud','prijzen'],['voc','roepen'],['par','voorbereiden'],['port','dragen'],
   ['navig','varen'],['pugn','vechten'],['cant','zingen'],['spect','kijken naar'],['labor','werken'],['habit','wonen'],
@@ -4349,7 +4391,7 @@ function deVocabOefenen(){
 function laVocabOefenen(){
   const cats = {};
   LA_VOCAB.forEach((chap, i)=>{
-    cats['hst'+i] = { title: chap.title, sub: 'SPQR hoofdstuk', words: chap.words, vocabOnly: true };
+    cats['hst'+i] = { title: chap.title, sub: 'SPQR verhaal', words: chap.words, vocabOnly: true };
   });
   return renderOefenCategoryPicker(cats, null, (w)=>w.lat);
 }
