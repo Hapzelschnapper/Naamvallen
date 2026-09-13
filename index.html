@@ -186,14 +186,28 @@
   .chapter-header.open{border-color:var(--gold);background:var(--card-2);}
   .chapter-arrow{color:var(--ink-faint);transition:transform .15s;}
   .chapter-header.open .chapter-arrow{transform:rotate(180deg);color:var(--gold);}
-  .chapter-subs{display:flex;flex-wrap:wrap;gap:8px;padding:10px 4px 4px 16px;}
+  .chapter-subs{display:flex;flex-direction:column;gap:6px;padding:10px 4px 4px 16px;}
   .sub-btn{
-    background:var(--card-2);border:1px solid rgba(217,164,65,0.2);border-radius:999px;
-    padding:7px 14px;font-size:.85rem;color:var(--ink-dim);font-family:'Nunito',sans-serif;cursor:pointer;
+    background:var(--card-2);border:1px solid rgba(217,164,65,0.2);border-radius:var(--radius);
+    padding:9px 14px;font-size:.85rem;color:var(--ink-dim);font-family:'Nunito',sans-serif;cursor:pointer;text-align:left;
   }
   .sub-btn:hover{border-color:var(--gold);color:var(--ink);}
   .sub-btn.active{background:var(--gold);border-color:var(--gold);color:#221c15;font-weight:700;}
   .sub-btn span{opacity:.7;font-size:.8em;}
+  .back-btn{
+    background:var(--card);border:1px solid rgba(217,164,65,0.3);border-radius:var(--radius);
+    color:var(--gold);font-family:'Nunito',sans-serif;font-weight:700;font-size:.85rem;
+    padding:8px 14px;cursor:pointer;margin-bottom:10px;
+  }
+  .back-btn:hover{border-color:var(--gold);}
+  .chapter-header.select-mode{display:flex;align-items:center;gap:10px;}
+  .chk-box{
+    width:20px;height:20px;flex:none;border:2px solid var(--gold-dim);border-radius:4px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;color:transparent;
+  }
+  .chk-box.checked{background:var(--gold);border-color:var(--gold);color:#221c15;}
+  .sub-row{display:flex;align-items:center;gap:10px;}
+  .sub-row .sub-btn{flex:1;}
   .placeholder .big{font-family:'Cinzel',serif;color:var(--gold);font-size:1.1rem;margin-bottom:8px;}
 
   footer{text-align:center;color:var(--ink-faint);font-size:.8rem;margin-top:50px;}
@@ -201,14 +215,12 @@
 </style>
 </head>
 <body>
-<div class="version-badge">v1.46</div>
+<div class="version-badge">v1.47</div>
 <div class="wrap">
   <header>
     <h1 id="app-title" style="cursor:pointer;">Naamvallen, Werkwoorden &amp; Woorden</h1>
     <p class="subtitle">Grammatica oefenen in het Latijn, Duits en Frans — en het Griekse alfabet</p>
-    <nav class="pillnav" id="lang-nav"></nav>
-    <nav class="pillnav sub" id="topic-nav"></nav>
-    <nav class="pillnav sub2" id="view-nav"></nav>
+    <button id="back-btn" class="back-btn" style="display:none;">← Terug</button>
   </header>
   <main id="content"></main>
   <footer>Gemaakt om samen talen onder de knie te krijgen — succes!</footer>
@@ -4834,63 +4846,22 @@ function elTransliterate(word){
 
 /* ================= STATE ================= */
 let currentLang = 'la';
-let currentTopic = 'nouns';
-let currentView = 'leren';
+let currentScreen = 'home'; // 'home' | 'lessen' | 'oefenen' | 'toets'
 let showStart = true;
 
-const LANGS = [ {id:'la', label:'Latijn'}, {id:'de', label:'Duits'}, {id:'fr', label:'Frans'}, {id:'el', label:'Grieks'} ];
-const TOPICS_NORMAL = [ {id:'nouns', label:'Zelfstandige naamwoorden'}, {id:'verbs', label:'Werkwoorden'}, {id:'vocab', label:'Vocabulaire'} ];
-const TOPICS_NO_NOUNS = [ {id:'verbs', label:'Werkwoorden'}, {id:'vocab', label:'Vocabulaire'} ];
-const TOPICS_GREEK = [ {id:'alfabet', label:'Alfabet'}, {id:'vocab', label:'Vocabulaire'} ];
-function currentTopics(){
-  if(currentLang==='el') return TOPICS_GREEK;
-  if(currentLang==='fr') return TOPICS_NO_NOUNS; // Frans heeft geen naamvaloefening voor zelfstandige naamwoorden
-  return TOPICS_NORMAL;
-}
+const LANG_NAMES = { la:'Latijn', de:'Duits', fr:'Frans', el:'Grieks' };
 
 /* ================= NAV RENDER ================= */
-const langNav = document.getElementById('lang-nav');
-const topicNav = document.getElementById('topic-nav');
-const viewNav = document.getElementById('view-nav');
 const content = document.getElementById('content');
-
-LANGS.forEach(l=>{
-  const b = document.createElement('button');
-  b.textContent = l.label; b.dataset.id = l.id;
-  b.addEventListener('click', ()=>{
-    currentLang=l.id;
-    const topics = currentTopics();
-    if(!topics.find(t=>t.id===currentTopic)) currentTopic = topics[0].id;
-    render();
-  });
-  langNav.appendChild(b);
+const backBtn = document.getElementById('back-btn');
+backBtn.addEventListener('click', ()=>{
+  if(currentScreen==='home'){ showStart = true; } else { currentScreen = 'home'; }
+  render();
 });
 
 function renderNav(){
   document.body.dataset.lang = currentLang;
-  langNav.style.display = 'flex';
-  Array.from(langNav.children).forEach(b=>b.classList.toggle('active', b.dataset.id===currentLang));
-
-  topicNav.innerHTML = '';
-  currentTopics().forEach(t=>{
-    const b = document.createElement('button');
-    b.textContent = t.label; b.dataset.id = t.id;
-    b.classList.toggle('active', t.id===currentTopic);
-    b.addEventListener('click', ()=>{ currentTopic=t.id; currentView='leren'; render(); });
-    topicNav.appendChild(b);
-  });
-
-  viewNav.innerHTML = '';
-  if(currentTopic!=='vocab'){
-    ['leren','oefenen'].forEach(v=>{
-      const b = document.createElement('button');
-      b.textContent = v==='leren' ? 'Leren' : 'Oefenen';
-      b.dataset.id = v;
-      b.classList.toggle('active', v===currentView);
-      b.addEventListener('click', ()=>{ currentView=v; render(); });
-      viewNav.appendChild(b);
-    });
-  }
+  backBtn.style.display = 'inline-block';
 }
 
 /* ================= CONTENT: LATIN NOUNS ================= */
@@ -5575,6 +5546,35 @@ function normalizeNl(nl){
 }
 function normAnswer(s){ return s.trim().toLowerCase(); }
 
+/* ================= SRS (Leitner) — alleen voor woorden/letters, niet voor vervoegingen/naamvallen ================= */
+const SRS_STORAGE_KEY = 'talenapp_srs_v1';
+const SRS_INTERVALS_DAYS = [0,1,2,4,7,14]; // index = box (0..5)
+function srsLoadAll(){
+  try{ return JSON.parse(localStorage.getItem(SRS_STORAGE_KEY) || '{}'); } catch(e){ return {}; }
+}
+function srsSaveAll(store){
+  try{ localStorage.setItem(SRS_STORAGE_KEY, JSON.stringify(store)); } catch(e){ /* opslag niet beschikbaar, negeren */ }
+}
+function srsToday(){ return new Date().toISOString().slice(0,10); }
+function srsKeyFor(langCode, word){ return `${langCode}|${word.target}|${word.nl}`; }
+function srsIsDue(langCode, word){
+  const store = srsLoadAll();
+  const rec = store[srsKeyFor(langCode, word)];
+  if(!rec) return true;
+  return rec.due <= srsToday();
+}
+function srsRecord(langCode, word, correct){
+  const store = srsLoadAll();
+  const key = srsKeyFor(langCode, word);
+  const rec = store[key] || { box:0, due: srsToday() };
+  rec.box = correct ? Math.min(rec.box+1, SRS_INTERVALS_DAYS.length-1) : 0;
+  const d = new Date();
+  d.setDate(d.getDate() + SRS_INTERVALS_DAYS[rec.box]);
+  rec.due = d.toISOString().slice(0,10);
+  store[key] = rec;
+  srsSaveAll(store);
+}
+
 function renderOefenCategoryPicker(cats, questionTemplate, lemmaFn, describeForm, mcOnly, noHints, langCode){
   const wrapId = 'oefen-' + Math.random().toString(36).slice(2,8);
   setTimeout(()=>initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOnly, noHints), 0);
@@ -5670,6 +5670,11 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
 
   function pickWord(){
     const cat = cats[catKey];
+    if(cat.vocabOnly && cat.srsLang){
+      const due = cat.words.filter(w=>srsIsDue(cat.srsLang, w));
+      const pool = due.length ? due : cat.words;
+      return pool[Math.floor(Math.random()*pool.length)];
+    }
     return cat.words[Math.floor(Math.random()*cat.words.length)];
   }
 
@@ -5728,6 +5733,7 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
   function buildVocabQuestion(dirType){
     const cat = cats[catKey];
     const word = pickWord();
+    const itemWord = cat.itemLabel==='letter' ? 'de letter' : 'het woord';
     const others = cat.words.filter(w=>w!==word);
     const altLookup = {};
     if(dirType==='t2nl'){
@@ -5736,6 +5742,7 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
       others.forEach(w2=>{ normalizeNl(w2.nl).forEach(m=>{ altLookup[m] = `"${lemmaFn(w2)}" betekent "${w2.nl}"`; }); });
       return {
         type:'vertaal',
+        word,
         questionHTML: `Wat betekent <span class="w">${lemmaFn(word)}</span>?`,
         correct,
         mcOptions: shuffle([correct, ...wrongPool.slice(0,3)]),
@@ -5749,7 +5756,8 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
     others.forEach(w2=>{ altLookup[normAnswer(lemmaFn(w2))] = `"${lemmaFn(w2)}" betekent "${w2.nl}"`; });
     return {
       type:'vertaal',
-      questionHTML: `Wat is het woord voor <span class="w">${word.nl}</span>?`,
+      word,
+      questionHTML: `Wat is ${itemWord} voor <span class="w">${word.nl}</span>?`,
       correct,
       mcOptions: shuffle([correct, ...wrongPool.slice(0,3)]),
       accept: (v)=> ({ ok: splitAlternatives(correct).some(alt=>normAnswer(alt)===normAnswer(v)), typo:false }),
@@ -5873,8 +5881,8 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
       feedbackEl.className='feedback good';
     } else if(reason==='toomanyhints'){
       streak=0;
-      feedbackEl.textContent=`Dat klopt, maar met zoveel hints telt het niet mee. Het antwoord was "${current.correct}".`;
-      feedbackEl.className='feedback bad';
+      feedbackEl.textContent = current.bonusInfo ? `Goed zo! (dit betekent: "${current.bonusInfo}")` : 'Goed zo!';
+      feedbackEl.className='feedback good';
     } else {
       streak=0;
       let msg = `Niet helemaal — het juiste antwoord is "${current.correct}".`;
@@ -5896,10 +5904,81 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
 }
 
 /* ================= MASTER RENDER ================= */
+function normWords(words, key){
+  return words.map(w=>({ target:w[key], nl:w.nl, bonus:w.bonus }));
+}
+
+function frReorderSubs(subs){
+  const lettered = subs.filter(s=>/^Paragraaf [a-zA-Z]$/.test(s.title));
+  const others = subs.filter(s=>!/^Paragraaf [a-zA-Z]$/.test(s.title));
+  lettered.sort((a,b)=>{
+    const la=a.title.slice(-1), lb=b.title.slice(-1);
+    const aLower = la===la.toLowerCase(), bLower = lb===lb.toLowerCase();
+    if(aLower!==bLower) return aLower ? -1 : 1;
+    return la.localeCompare(lb);
+  });
+  const renumbered = lettered.map((s,i)=>({ title:`Paragraaf ${i+1}`, words:s.words }));
+  others.sort((a,b)=>{
+    const rank = t => t.startsWith('Hele hoofdstuk') ? 2 : (t==='Phrases-clés' ? 1 : 0);
+    return rank(a.title)-rank(b.title);
+  });
+  return [...renumbered, ...others];
+}
+
+function elLetterWords(){
+  const out = [];
+  EL_ALFABET.forEach(l=>{
+    out.push({ target:l.upper, nl:l.name });
+    if(l.name==='sigma'){
+      out.push({ target:'σ', nl:l.name });
+      out.push({ target:'ς', nl:l.name });
+    } else {
+      out.push({ target:l.lower, nl:l.name });
+    }
+  });
+  return out;
+}
+
+const SPECIAL_CONTENT = {
+  'la-nouns': { leren:laNounLeren, oefenen:laNounOefenen },
+  'la-verbs': { leren:laVerbLeren, oefenen:laVerbOefenen },
+  'de-nouns': { leren:deNounLeren, oefenen:deNounOefenen },
+  'de-verbs': { leren:deVerbLeren, oefenen:deVerbOefenen },
+  'fr-verbs': { leren:frVerbLeren, oefenen:frVerbOefenen }
+};
+
+function getChapters(lang){
+  const chapters = [];
+  if(lang==='la'){
+    chapters.push({ id:'la-nouns', title:'Naamvallen', special:'la-nouns' });
+    chapters.push({ id:'la-verbs', title:'Vervoegingen', special:'la-verbs' });
+    LA_VOCAB.forEach((c,ci)=>{
+      chapters.push({ id:'c'+ci, title:c.title, subs: c.subs.map(s=>({ title:s.title, words: normWords(s.words,'lat') })) });
+    });
+  } else if(lang==='de'){
+    chapters.push({ id:'de-nouns', title:'Naamvallen', special:'de-nouns' });
+    chapters.push({ id:'de-verbs', title:'Vervoegingen', special:'de-verbs' });
+    DE_VOCAB.forEach((c,ci)=>{
+      chapters.push({ id:'c'+ci, title:c.title, subs: c.subs.map(s=>({ title:s.title, words: normWords(s.words,'de') })) });
+    });
+  } else if(lang==='fr'){
+    chapters.push({ id:'fr-verbs', title:'Vervoegingen', special:'fr-verbs' });
+    FR_VOCAB.forEach((c,ci)=>{
+      const subs = c.subs.map(s=>({ title:s.title, words: normWords(s.words,'fr') }));
+      chapters.push({ id:'c'+ci, title:c.title, subs: frReorderSubs(subs) });
+    });
+  } else if(lang==='el'){
+    chapters.push({ id:'el-alf', title:'Hoofdstuk 1-2', subs:[{ title:'Het alfabet', words: elLetterWords(), itemLabel:'letter', matching:true, richLeren: elAlfabetLeren }] });
+    EL_VOCAB.forEach((c,ci)=>{
+      chapters.push({ id:'c'+ci, title:c.title, subs:[{ title:'Alle woorden', words: normWords(c.words,'gr') }] });
+    });
+  }
+  return chapters;
+}
+
+/* ================= START SCREEN & LANGUAGE HOME ================= */
 function renderStartScreen(){
   document.body.dataset.lang = '';
-  langNav.style.display = 'none';
-  topicNav.innerHTML = ''; viewNav.innerHTML = '';
   const wrapId = 'start-' + Math.random().toString(36).slice(2,8);
   setTimeout(()=>{
     const root = document.getElementById(wrapId);
@@ -5907,9 +5986,7 @@ function renderStartScreen(){
     root.querySelectorAll('.start-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         currentLang = btn.dataset.id;
-        const topics = currentTopics();
-        currentTopic = topics[0].id;
-        currentView = 'leren';
+        currentScreen = 'home';
         showStart = false;
         render();
       });
@@ -5921,35 +5998,370 @@ function renderStartScreen(){
       <button class="start-btn" data-id="la" style="--sc:var(--lang-la);"><strong>Latijn</strong><span>Naamvallen, werkwoorden vervoegen &amp; woorden</span></button>
       <button class="start-btn" data-id="de" style="--sc:var(--lang-de);"><strong>Duits</strong><span>Naamvallen, werkwoorden vervoegen &amp; woorden</span></button>
       <button class="start-btn" data-id="fr" style="--sc:var(--lang-fr);"><strong>Frans</strong><span>Werkwoorden vervoegen &amp; woorden</span></button>
-      <button class="start-btn" data-id="el" style="--sc:var(--lang-el);"><strong>Grieks</strong><span>Het alfabet</span></button>
+      <button class="start-btn" data-id="el" style="--sc:var(--lang-el);"><strong>Grieks</strong><span>Het alfabet &amp; woorden</span></button>
     </div>
   </div>`;
+}
+
+function renderLangHome(){
+  const wrapId = 'home-' + Math.random().toString(36).slice(2,8);
+  setTimeout(()=>{
+    const root = document.getElementById(wrapId);
+    if(!root) return;
+    root.querySelectorAll('.start-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ currentScreen = btn.dataset.screen; render(); });
+    });
+  }, 0);
+  return `<div id="${wrapId}" class="start-screen">
+    <p class="start-intro">${LANG_NAMES[currentLang]}</p>
+    <div class="start-grid">
+      <button class="start-btn" data-screen="lessen" style="--sc:var(--lang-${currentLang});"><strong>Lessen</strong><span>Hoofdstukken, woordenlijsten &amp; uitleg</span></button>
+      <button class="start-btn" data-screen="oefenen" style="--sc:var(--lang-${currentLang});"><strong>Oefenen</strong><span>Kies paragrafen om te oefenen</span></button>
+      <button class="start-btn" data-screen="toets" style="--sc:var(--lang-${currentLang});"><strong>Toets</strong><span>20 vragen, met cijfer</span></button>
+    </div>
+  </div>`;
+}
+
+/* ================= LESSEN ================= */
+function renderLessen(){
+  const chapters = getChapters(currentLang);
+  const wrapId = 'lessen-' + Math.random().toString(36).slice(2,8);
+  setTimeout(()=>initLessen(wrapId, chapters), 0);
+  const blocks = chapters.map((c,ci)=>{
+    if(c.special){
+      return `<div class="chapter-block"><button class="chapter-header" data-ci="${ci}" data-special="1"><strong>${c.title}</strong></button></div>`;
+    }
+    return `<div class="chapter-block">
+      <button class="chapter-header" data-ci="${ci}"><strong>${c.title}</strong><span class="chapter-arrow">▾</span></button>
+      <div class="chapter-subs" data-ci="${ci}" style="display:none;">
+        ${c.subs.map((s,si)=>`<button class="sub-btn" data-ci="${ci}" data-si="${si}">${s.title} <span>(${s.words.length})</span></button>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  return `<div id="${wrapId}">
+    <h2>Lessen</h2>
+    ${blocks}
+    <div data-role="lessen-content" style="margin-top:20px;"></div>
+  </div>`;
+}
+
+function initLessen(wrapId, chapters){
+  const root = document.getElementById(wrapId);
+  if(!root) return;
+  const contentEl = root.querySelector('[data-role="lessen-content"]');
+
+  function showSpecial(ci){
+    const c = chapters[ci];
+    const sc = SPECIAL_CONTENT[c.special];
+    contentEl.innerHTML = sc.leren() + `<div style="margin-top:20px;"><button class="next-btn show" data-role="special-oefen">Oefenen →</button></div><div data-role="special-quiz" style="margin-top:16px;"></div>`;
+    contentEl.querySelector('[data-role="special-oefen"]').addEventListener('click', ()=>{
+      contentEl.querySelector('[data-role="special-quiz"]').innerHTML = sc.oefenen();
+    });
+  }
+
+  function showSub(ci, si){
+    const c = chapters[ci], s = c.subs[si];
+    const matchBtn = s.matching ? `<button class="next-btn show" data-role="matching-btn" style="margin-left:8px;">Matching-spel →</button>` : '';
+    const bodyHtml = s.richLeren
+      ? s.richLeren()
+      : `<h3>${c.title} — ${s.title}</h3>
+         <div class="table-scroll"><table><thead><tr><th>${LANG_NAMES[currentLang]}</th><th>Nederlands</th></tr></thead><tbody>${s.words.map(w=>`<tr><td>${w.target}</td><td>${w.nl}</td></tr>`).join('')}</tbody></table></div>`;
+    contentEl.innerHTML = `
+      ${bodyHtml}
+      <button class="next-btn show" data-role="sub-oefen">Oefenen →</button>${matchBtn}
+      <div data-role="sub-quiz" style="margin-top:16px;"></div>
+    `;
+    contentEl.querySelector('[data-role="sub-oefen"]').addEventListener('click', ()=>{
+      contentEl.querySelector('[data-role="sub-quiz"]').innerHTML = renderOefenCategoryPicker(
+        { one: { title:s.title, sub:'', words:s.words, vocabOnly:true, srsLang:currentLang, itemLabel:s.itemLabel } },
+        null, (w)=>w.target, undefined, undefined, undefined, currentLang.toUpperCase()
+      );
+    });
+    if(s.matching){
+      contentEl.querySelector('[data-role="matching-btn"]').addEventListener('click', ()=>{
+        const quizArea = contentEl.querySelector('[data-role="sub-quiz"]');
+        quizArea.innerHTML = renderMatchingGame();
+        setTimeout(()=>initMatchingGame(quizArea), 0);
+      });
+    }
+  }
+
+  root.querySelectorAll('.chapter-header').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const ci = +btn.dataset.ci;
+      if(btn.dataset.special){
+        root.querySelectorAll('.chapter-header').forEach(b=>b.classList.toggle('open', b===btn));
+        showSpecial(ci);
+        return;
+      }
+      const subsEl = root.querySelector(`.chapter-subs[data-ci="${ci}"]`);
+      const opening = subsEl.style.display === 'none';
+      subsEl.style.display = opening ? 'flex' : 'none';
+      btn.classList.toggle('open', opening);
+    });
+  });
+  root.querySelectorAll('.sub-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      root.querySelectorAll('.sub-btn').forEach(b=>b.classList.toggle('active', b===btn));
+      showSub(+btn.dataset.ci, +btn.dataset.si);
+    });
+  });
+}
+
+/* ================= OEFENEN & TOETS: SELECTIE ================= */
+function renderSelect(mode){
+  const chapters = getChapters(currentLang).filter(c=>!c.special);
+  const wrapId = 'sel-' + Math.random().toString(36).slice(2,8);
+  setTimeout(()=>initSelect(wrapId, chapters, mode), 0);
+  const blocks = chapters.map((c,ci)=>`
+    <div class="chapter-block">
+      <div class="chapter-header select-mode">
+        <span class="chk-box" data-role="chk-chapter" data-ci="${ci}">✓</span>
+        <strong style="flex:1;cursor:pointer;" data-role="chapter-toggle" data-ci="${ci}">${c.title}</strong>
+        <span class="chapter-arrow" data-role="chapter-toggle" data-ci="${ci}" style="cursor:pointer;">▾</span>
+      </div>
+      <div class="chapter-subs" data-ci="${ci}" style="display:none;">
+        ${c.subs.map((s,si)=>`
+          <div class="sub-row">
+            <span class="chk-box" data-role="chk-sub" data-ci="${ci}" data-si="${si}">✓</span>
+            <span class="sub-btn" style="cursor:default;">${s.title} <span>(${s.words.length})</span></span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+  const modeLabel = mode==='toets' ? 'Toets' : 'Oefenen';
+  return `<div id="${wrapId}">
+    <h2>${modeLabel} — kies paragrafen</h2>
+    <p style="color:var(--ink-faint);font-size:.85rem;">Tik een hoofdstuk aan om alle paragrafen te selecteren, of klap open voor losse paragrafen.</p>
+    ${blocks}
+    <div data-role="select-footer" style="margin-top:20px;"></div>
+  </div>`;
+}
+
+function initSelect(wrapId, chapters, mode){
+  const root = document.getElementById(wrapId);
+  if(!root) return;
+  const footer = root.querySelector('[data-role="select-footer"]');
+  const selected = new Set();
+  const subKey = (ci,si)=> ci+'-'+si;
+
+  function collectWords(){
+    const words = []; let firstItemLabel;
+    selected.forEach(key=>{
+      const [ci,si] = key.split('-').map(Number);
+      const s = chapters[ci].subs[si];
+      if(firstItemLabel===undefined) firstItemLabel = s.itemLabel;
+      words.push(...s.words);
+    });
+    return { words, itemLabel: firstItemLabel };
+  }
+
+  function updateFooter(){
+    const { words, itemLabel } = collectWords();
+    if(mode==='oefenen'){
+      footer.innerHTML = selected.size ? `<button class="next-btn show" data-role="start-btn">Start oefenen (${words.length} woorden geselecteerd)</button>` : '';
+      const startBtn = footer.querySelector('[data-role="start-btn"]');
+      if(startBtn){
+        startBtn.addEventListener('click', ()=>{
+          let area = root.querySelector('[data-role="oefen-area"]');
+          if(!area){ area = document.createElement('div'); area.dataset.role='oefen-area'; area.style.marginTop='20px'; root.appendChild(area); }
+          area.innerHTML = renderOefenCategoryPicker(
+            { sel: { title:'Geselecteerde paragrafen', sub:'', words, vocabOnly:true, srsLang:currentLang, itemLabel } },
+            null, (w)=>w.target, undefined, undefined, undefined, currentLang.toUpperCase()
+          );
+        });
+      }
+    } else {
+      if(!selected.size){ footer.innerHTML=''; return; }
+      footer.innerHTML = `
+        <div class="dir-toggle" style="display:flex;">
+          <span class="dir-label">Richting:</span>
+          <button class="dir-btn active" data-dir="nl2target">NL → ${currentLang.toUpperCase()}</button>
+          <button class="dir-btn" data-dir="target2nl">${currentLang.toUpperCase()} → NL</button>
+          <button class="dir-btn" data-dir="both">Beide</button>
+        </div>
+        <button class="next-btn show" data-role="start-toets" style="margin-top:12px;">Start toets (20 vragen)</button>
+      `;
+      let dir = 'nl2target';
+      footer.querySelectorAll('.dir-btn').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          dir = b.dataset.dir;
+          footer.querySelectorAll('.dir-btn').forEach(x=>x.classList.toggle('active', x===b));
+        });
+      });
+      footer.querySelector('[data-role="start-toets"]').addEventListener('click', ()=>{
+        const { words:w2, itemLabel:il2 } = collectWords();
+        content.innerHTML = renderToetsRunner(w2, currentLang.toUpperCase(), il2, dir);
+      });
+    }
+  }
+
+  root.querySelectorAll('[data-role="chapter-toggle"]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const ci = el.dataset.ci;
+      const subsEl = root.querySelector(`.chapter-subs[data-ci="${ci}"]`);
+      subsEl.style.display = subsEl.style.display==='none' ? 'flex' : 'none';
+    });
+  });
+
+  root.querySelectorAll('[data-role="chk-chapter"]').forEach(chk=>{
+    chk.addEventListener('click', ()=>{
+      const ci = +chk.dataset.ci;
+      const chap = chapters[ci];
+      const allSelected = chap.subs.every((s,si)=>selected.has(subKey(ci,si)));
+      chap.subs.forEach((s,si)=>{
+        const key = subKey(ci,si);
+        if(allSelected) selected.delete(key); else selected.add(key);
+        const subChk = root.querySelector(`[data-role="chk-sub"][data-ci="${ci}"][data-si="${si}"]`);
+        if(subChk) subChk.classList.toggle('checked', !allSelected);
+      });
+      chk.classList.toggle('checked', !allSelected);
+      updateFooter();
+    });
+  });
+
+  root.querySelectorAll('[data-role="chk-sub"]').forEach(chk=>{
+    chk.addEventListener('click', ()=>{
+      const ci = +chk.dataset.ci, si = +chk.dataset.si;
+      const key = subKey(ci,si);
+      if(selected.has(key)){ selected.delete(key); chk.classList.remove('checked'); }
+      else { selected.add(key); chk.classList.add('checked'); }
+      const chap = chapters[ci];
+      const allSelected = chap.subs.every((s,si2)=>selected.has(subKey(ci,si2)));
+      const chapChk = root.querySelector(`[data-role="chk-chapter"][data-ci="${ci}"]`);
+      chapChk.classList.toggle('checked', allSelected);
+      updateFooter();
+    });
+  });
+
+  updateFooter();
+}
+
+/* ================= TOETS RUNNER ================= */
+function renderToetsRunner(words, langCode, itemLabel, direction){
+  const wrapId = 'toets-' + Math.random().toString(36).slice(2,8);
+  setTimeout(()=>initToetsRunner(wrapId, words, langCode, itemLabel, direction), 0);
+  return `<div id="${wrapId}">
+    <div class="quiz-card">
+      <div class="quiz-meta"><span data-role="toets-progress">Vraag 1 / 20</span><span data-role="toets-wrong">Fout: 0</span></div>
+      <p class="quiz-question" data-role="tq-text"></p>
+      <div class="options" data-role="tq-options"></div>
+      <div class="input-row" data-role="tq-input-row" style="display:none;">
+        <input type="text" class="text-input" data-role="tq-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Typ je antwoord...">
+        <button class="check-btn" data-role="tq-check">Controleer</button>
+      </div>
+      <p class="feedback" data-role="tq-feedback"></p>
+      <button class="next-btn" data-role="tq-next">Volgende →</button>
+    </div>
+  </div>`;
+}
+
+function initToetsRunner(wrapId, words, langCode, itemLabel, direction){
+  const root = document.getElementById(wrapId);
+  if(!root) return;
+  const progressEl = root.querySelector('[data-role="toets-progress"]');
+  const wrongEl = root.querySelector('[data-role="toets-wrong"]');
+  const textEl = root.querySelector('[data-role="tq-text"]');
+  const optsEl = root.querySelector('[data-role="tq-options"]');
+  const inputRow = root.querySelector('[data-role="tq-input-row"]');
+  const inputEl = root.querySelector('[data-role="tq-input"]');
+  const checkBtn = root.querySelector('[data-role="tq-check"]');
+  const feedbackEl = root.querySelector('[data-role="tq-feedback"]');
+  const nextBtn = root.querySelector('[data-role="tq-next"]');
+
+  const plan = direction==='both'
+    ? shuffle([...Array(10).fill('nl2target'), ...Array(10).fill('target2nl')])
+    : Array(20).fill(direction);
+
+  let idx=0, wrong=0, current=null;
+  const itemWord = itemLabel==='letter' ? 'de letter' : 'het woord';
+
+  function buildQ(dir){
+    const word = words[Math.floor(Math.random()*words.length)];
+    const others = words.filter(w=>w!==word);
+    if(dir==='target2nl'){
+      const correct = word.nl;
+      const wrongPool = shuffle(others.map(w=>w.nl));
+      return { word, correct, questionHTML:`Wat betekent <span class="w">${word.target}</span>?`, mcOptions: shuffle([correct, ...wrongPool.slice(0,3)]) };
+    }
+    const correct = word.target;
+    const wrongPool = shuffle(others.map(w=>w.target));
+    return { word, correct, questionHTML:`Wat is ${itemWord} voor <span class="w">${word.nl}</span>?`, mcOptions: shuffle([correct, ...wrongPool.slice(0,3)]) };
+  }
+
+  function next(){
+    if(idx>=20){ showResult(); return; }
+    current = buildQ(plan[idx]);
+    current.mode = Math.random()<(1/3) ? 'mc' : 'input';
+    progressEl.textContent = `Vraag ${idx+1} / 20`;
+    wrongEl.textContent = `Fout: ${wrong}`;
+    textEl.innerHTML = current.questionHTML;
+    feedbackEl.textContent=''; feedbackEl.className='feedback';
+    nextBtn.classList.remove('show');
+    inputEl.value=''; inputEl.disabled=false; checkBtn.disabled=false;
+    if(current.mode==='mc'){
+      inputRow.style.display='none';
+      optsEl.style.display='grid';
+      optsEl.innerHTML='';
+      current.mcOptions.forEach(opt=>{
+        const b=document.createElement('button');
+        b.className='opt'; b.textContent=opt;
+        b.addEventListener('click', ()=>answer(opt));
+        optsEl.appendChild(b);
+      });
+    } else {
+      optsEl.style.display='none'; optsEl.innerHTML='';
+      inputRow.style.display='flex';
+    }
+  }
+
+  function answer(val){
+    const isCorrect = normAnswer(val)===normAnswer(current.correct);
+    if(current.mode==='mc'){
+      Array.from(optsEl.children).forEach(b=>{ b.disabled=true; if(b.textContent===current.correct) b.classList.add('correct'); else if(b.textContent===val && !isCorrect) b.classList.add('wrong'); });
+    } else {
+      inputEl.disabled=true; checkBtn.disabled=true;
+    }
+    if(!isCorrect) wrong++;
+    srsRecord(langCode, current.word, isCorrect);
+    feedbackEl.textContent = isCorrect ? 'Goed zo!' : `Niet helemaal — het juiste antwoord is "${current.correct}".`;
+    feedbackEl.className = 'feedback ' + (isCorrect?'good':'bad');
+    idx++;
+    nextBtn.classList.add('show');
+  }
+
+  checkBtn.addEventListener('click', ()=>{ if(!inputEl.disabled) answer(inputEl.value); });
+  inputEl.addEventListener('keydown', e=>{ if(e.key==='Enter' && !inputEl.disabled) answer(inputEl.value); });
+  nextBtn.addEventListener('click', next);
+
+  function showResult(){
+    const cijfer = Math.max(1, Math.min(10, 10-wrong));
+    root.innerHTML = `
+      <div class="quiz-card" style="text-align:center;">
+        <h2 style="margin-top:0;">Toets afgerond</h2>
+        <p style="font-size:2rem;font-family:'Cinzel',serif;color:var(--gold);margin:10px 0;">Cijfer: ${cijfer}</p>
+        <p style="color:var(--ink-dim);">${wrong} fout van de 20</p>
+        <button class="next-btn show" data-role="toets-again">Opnieuw</button>
+        <button class="back-btn" data-role="toets-home" style="margin-left:8px;">Naar hoofdscherm</button>
+      </div>`;
+    root.querySelector('[data-role="toets-again"]').addEventListener('click', ()=>{ render(); });
+    root.querySelector('[data-role="toets-home"]').addEventListener('click', ()=>{ currentScreen='home'; render(); });
+  }
+
+  next();
 }
 
 function render(){
   if(showStart){
     content.innerHTML = renderStartScreen();
+    backBtn.style.display = 'none';
     return;
   }
   renderNav();
   let html = '';
-  if(currentLang==='el'){
-    if(currentTopic==='vocab') html = elVocabOefenen();
-    else html = currentView==='leren' ? elAlfabetLeren() : elAlfabetOefenen();
-  }
-  else if(currentTopic==='vocab'){
-    if(currentLang==='de') html = deVocabOefenen();
-    else if(currentLang==='la') html = laVocabOefenen();
-    else if(currentLang==='fr') html = frVocabOefenen();
-    else html = vocabPlaceholder();
-  }
-  else if(currentLang==='la'){
-    html = currentTopic==='nouns' ? (currentView==='leren'?laNounLeren():laNounOefenen()) : (currentView==='leren'?laVerbLeren():laVerbOefenen());
-  } else if(currentLang==='de'){
-    html = currentTopic==='nouns' ? (currentView==='leren'?deNounLeren():deNounOefenen()) : (currentView==='leren'?deVerbLeren():deVerbOefenen());
-  } else if(currentLang==='fr'){
-    html = currentTopic==='nouns' ? (currentView==='leren'?frNounLeren():frNounOefenen()) : (currentView==='leren'?frVerbLeren():frVerbOefenen());
-  }
+  if(currentScreen==='home') html = renderLangHome();
+  else if(currentScreen==='lessen') html = renderLessen();
+  else if(currentScreen==='oefenen') html = renderSelect('oefenen');
+  else if(currentScreen==='toets') html = renderSelect('toets');
   content.innerHTML = html;
 }
 
