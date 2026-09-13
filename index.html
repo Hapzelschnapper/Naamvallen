@@ -201,7 +201,7 @@
 </style>
 </head>
 <body>
-<div class="version-badge">v1.45</div>
+<div class="version-badge">v1.46</div>
 <div class="wrap">
   <header>
     <h1 id="app-title" style="cursor:pointer;">Naamvallen, Werkwoorden &amp; Woorden</h1>
@@ -5103,6 +5103,45 @@ function deNounLeren(){
     2. Is het bijbehorende zelfstandig naamwoord mannelijk, vrouwelijk, onzijdig of meervoud?<br>
     3. In welke naamval staat het zinsdeel (vraag desnoods: wie/wat + persoonsvorm → 1e naamval; wat + persoonsvorm + onderwerp → 4e naamval)?
   </div>
+
+  <h2>Het bezittelijk voornaamwoord</h2>
+  <p>Een bezittelijk voornaamwoord zegt van wie iets is. Elk persoonlijk voornaamwoord hoort bij een eigen bezittelijk voornaamwoord:</p>
+  <table><thead><tr><th>persoonlijk</th><th>bezittelijk</th><th>NL</th></tr></thead><tbody>
+  <tr><td>ich</td><td>mein(e)</td><td>mijn</td></tr>
+  <tr><td>du</td><td>dein(e)</td><td>jouw</td></tr>
+  <tr><td>er/es/man</td><td>sein(e)</td><td>zijn</td></tr>
+  <tr><td>sie</td><td>ihr(e)</td><td>haar</td></tr>
+  <tr><td>wir</td><td>unser(e)</td><td>ons/onze</td></tr>
+  <tr><td>ihr</td><td>euer, eure</td><td>jullie</td></tr>
+  <tr><td>sie</td><td>ihr(e)</td><td>hun</td></tr>
+  <tr><td>Sie</td><td>Ihr(e)</td><td>uw</td></tr>
+  </tbody></table>
+  <p>Een bezittelijk voornaamwoord verbuigt precies als <em>ein</em> (het hoort dus bij de ein-Gruppe): <em>ein Vater / mein Vater</em>, <em>eine Mutter / meine Mutter</em>, <em>ein Kind / mein Kind</em>, <em>keine Kinder / meine Kinder</em>.</p>
+  <div class="note">Bij <em>euer</em> valt vaak de tweede <em>e</em> weg zodra er een uitgang bijkomt: <em>euer Geschenk</em>, maar <em>eure Geschichte</em> en <em>eure Geschenke</em>.</div>
+
+  <h2>Het geslacht van het zelfstandig naamwoord</h2>
+  <p>Elk Duits zelfstandig naamwoord heeft een vast geslacht: <strong>der</strong> (mannelijk), <strong>die</strong> (vrouwelijk) of <strong>das</strong> (onzijdig). In woordenboeken zie je dat vaak afgekort als m / v (of w) / o (of s). Het meervoud krijgt altijd <em>die</em>.</p>
+  <p>Een paar vuistregels (met uitzonderingen, maar wel vaak kloppend):</p>
+  <ul style="color:var(--ink-dim);">
+    <li><strong>Mannelijk</strong> zijn vaak: mannelijke personen en dieren, beroepen, dagen, maanden, dagdelen en jaargetijden — bijv. <em>der Nachbar</em>, <em>der Montag</em>.</li>
+    <li><strong>Vrouwelijk</strong> zijn vaak: vrouwelijke personen/dieren/beroepen en woorden op <em>-heit, -keit, -ung, -schaft</em>, en de meeste woorden op <em>-e</em> — bijv. <em>die Nachbarin</em>, <em>die Wand</em>.</li>
+    <li><strong>Onzijdig</strong> zijn vaak: woorden die in het Nederlands ook het-woorden zijn, en verkleinwoorden op <em>-chen</em> — bijv. <em>das Wohnviertel</em>, <em>das Mädchen</em>.</li>
+  </ul>
+  <p>Veel mannelijke beroepen/personen maak je vrouwelijk met <em>-in</em>: <em>der Nachbar → die Nachbarin</em>.</p>
+  <div class="note">Leer een zelfstandig naamwoord altijd mét het lidwoord erbij: niet alleen <em>Schreibtisch</em>, maar <em>der Schreibtisch</em> — aan het lidwoord zie je het geslacht.</div>
+
+  <h2>Het persoonlijk voornaamwoord (als vervanging)</h2>
+  <p>Een persoonlijk voornaamwoord kan een zelfstandig naamwoord vervangen, zodat je het niet steeds hoeft te herhalen. Welk voornaamwoord je kiest, hangt af van het <strong>geslacht</strong> van het zelfstandig naamwoord — niet van welk lidwoord ervoor staat:</p>
+  <table><thead><tr><th>geslacht</th><th>bijv.</th><th>vervanging</th></tr></thead><tbody>
+  <tr><td>mannelijk</td><td>der/ein/mein Fluss</td><td>er</td></tr>
+  <tr><td>vrouwelijk</td><td>die/eine/meine Brücke</td><td>sie</td></tr>
+  <tr><td>onzijdig</td><td>das/ein/mein Dorf</td><td>es</td></tr>
+  <tr><td>meervoud</td><td>die/keine/meine Einwohner</td><td>sie</td></tr>
+  </tbody></table>
+  <div class="card">
+    <p style="margin-bottom:0;"><em>Der Fluss ist lang. Er ist blau.</em> — De rivier is lang. Hij is blauw.<br>
+    <em>Mein Dorf ist klein. Es ist schön.</em> — Mijn dorp is klein. Het is mooi.</p>
+  </div>
   `;
 }
 function deNounOefenen(){
@@ -5127,9 +5166,29 @@ function deVerbLeren(){
   return `
   <h2>Werkwoordsvervoeging in het Duits</h2>
   <p>Deze cursus oefent twee tijden: de <strong>Präsens</strong> (tegenwoordige tijd) en het <strong>Perfekt</strong> (de gangbare verleden tijd in gesproken Duits, gevormd met <em>haben</em> + voltooid deelwoord).</p>
+
+  <h3>haben (hebben) en sein (zijn)</h3>
+  <p>Deze twee werkwoorden gebruik je voortdurend, en ze zijn onregelmatig:</p>
+  ${tableHTML(['haben (hebben)','sein (zijn)'], PERSON_LABEL_DE.map(p=>({label:p})), (r,c)=>{
+    const haben=['habe','hast','hat','haben','habt','haben'];
+    const sein=['bin','bist','ist','sind','seid','sind'];
+    return c===0 ? haben[r] : sein[r];
+  })}
+  <div class="note">Let op: bij <em>du</em> is het <strong>hast</strong> (niet "habst"), en bij <em>er/sie/es</em> is het <strong>hat</strong> (niet "habt").</div>
+
   <h3>Präsens — regelmatig, bijv. machen (maken)</h3>
   ${tableHTML(['Präsens'], PERSON_LABEL_DE.map(p=>({label:p})), (r)=>dePresentForms(ex.stem, ex.needsE)[r])}
-  <div class="note">Bij stammen op <em>-t</em> of <em>-d</em> (zoals <em>arbeiten</em>) wordt een extra <em>-e-</em> ingevoegd: <em>du arbeit<b>e</b>st, er arbeit<b>e</b>t</em>.</div>
+  <div class="note">Bij stammen op <em>-t</em> of <em>-d</em> (zoals <em>arbeiten</em>) wordt een extra <em>-e-</em> ingevoegd: <em>du arbeit<b>e</b>st, er arbeit<b>e</b>t</em>. Dezelfde extra <em>-e-</em> komt ook voor bij stammen op <em>-m</em>/<em>-n</em> met een medeklinker ervoor, zoals <em>öffnen → du öffnest</em>.</div>
+
+  <h3>Werkwoorden met een s-klank aan het eind van de stam</h3>
+  <p>Bij stammen die eindigen op <em>s, ss, ß, z</em> of <em>x</em> (zoals <em>reisen, heißen, tanzen</em>) krijgt <em>du</em> geen extra <em>-st</em>, maar alleen <em>-t</em> — anders zou je een dubbele s-klank krijgen.</p>
+  ${tableHTML(['wohnen (regelmatig)','heißen (heten)'], PERSON_LABEL_DE.map(p=>({label:p})), (r,c)=>{
+    const wohnen=['wohne','wohnst','wohnt','wohnen','wohnt','wohnen'];
+    const heissen=['heiße','heißt','heißt','heißen','heißt','heißen'];
+    return c===0 ? wohnen[r] : heissen[r];
+  })}
+  <div class="note">Dus: <em>du heißt</em> en <em>du tanzt</em> — niet "heißst" of "tanzst".</div>
+
   <h3>Perfekt — haben + voltooid deelwoord</h3>
   ${tableHTML(['Perfekt'], PERSON_LABEL_DE.map(p=>({label:p})), (r)=>dePerfektForms(ex.stem, ex.needsE)[r], 'machen: gemacht')}
   <p>Het voltooid deelwoord wordt gevormd als <em>ge + stam + t</em> (of <em>+et</em> bij stammen op -t/-d): <em>gemacht, gearbeitet</em>. Deze cursus gebruikt alleen regelmatige werkwoorden met <em>haben</em>.</p>
