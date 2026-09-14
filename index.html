@@ -215,14 +215,13 @@
 </style>
 </head>
 <body>
-<div class="version-badge">v1.47</div>
+<div class="version-badge">v1.50</div>
 <div class="wrap">
   <header>
-    <h1 id="app-title" style="cursor:pointer;">Naamvallen, Werkwoorden &amp; Woorden</h1>
-    <p class="subtitle">Grammatica oefenen in het Latijn, Duits en Frans — en het Griekse alfabet</p>
     <button id="back-btn" class="back-btn" style="display:none;">← Terug</button>
   </header>
   <main id="content"></main>
+
   <footer>Gemaakt om samen talen onder de knie te krijgen — succes!</footer>
 </div>
 
@@ -4856,6 +4855,7 @@ const content = document.getElementById('content');
 const backBtn = document.getElementById('back-btn');
 backBtn.addEventListener('click', ()=>{
   if(currentScreen==='home'){ showStart = true; } else { currentScreen = 'home'; }
+  lessenSelection = null;
   render();
 });
 
@@ -5177,6 +5177,104 @@ function deVerbLeren(){
   <div class="note"><em>Möchten</em> (graag willen) en <em>wissen</em> (weten) horen er ook bij: <em>möchten</em> krijgt wél gewoon een uitgang per persoon, <em>wissen</em> heeft — net als de echte modale werkwoorden — geen uitgang bij ich/er/sie/es/man: <em>ich weiß, er weiß</em>.</div>
   `;
 }
+
+/* ================= DUITS: LOSSE LESUITLEG PER HOOFDSTUK (Na Klar!) ================= */
+function deLes_PersoonlijkWerkwoord(){
+  return `
+  <h3>Zwakke werkwoorden en het persoonlijk voornaamwoord</h3>
+  <p>Het Duitse persoonlijk voornaamwoord: <em>ich, du, er/sie/es, wir, ihr, sie, Sie</em> (beleefdheidsvorm, altijd met hoofdletter).</p>
+  ${tableHTML(['machen (maken)'], PERSON_LABEL_DE.map(p=>({label:p})), (r)=>['mache','machst','macht','machen','macht','machen'][r])}
+  <p>Een zwak (regelmatig) werkwoord krijgt in de tegenwoordige tijd steeds dezelfde uitgangen: <em>-e, -st, -t, -en, -t, -en</em>.</p>
+  <div class="note"><em>Sie</em> (u/jullie, beleefd) krijgt altijd dezelfde vorm als <em>sie</em> (zij, meervoud) — alleen de hoofdletter maakt het verschil: <em>Sie machen</em>.</div>
+  `;
+}
+function deLes_HabenSein(){
+  return `
+  <h3>Haben en sein in de tegenwoordige tijd</h3>
+  <p>Deze twee werkwoorden gebruik je voortdurend, en ze zijn onregelmatig:</p>
+  ${tableHTML(['haben (hebben)','sein (zijn)'], PERSON_LABEL_DE.map(p=>({label:p})), (r,c)=>{
+    const haben=['habe','hast','hat','haben','habt','haben'];
+    const sein=['bin','bist','ist','sind','seid','sind'];
+    return c===0 ? haben[r] : sein[r];
+  })}
+  <div class="note">Let op: bij <em>du</em> is het <strong>hast</strong> (niet "habst"), en bij <em>er/sie/es</em> is het <strong>hat</strong> (niet "habt").</div>
+  `;
+}
+function deLes_Lidwoord(){
+  return `
+  <h3>Het bepaald en het onbepaald lidwoord</h3>
+  <p>Het bepaalde lidwoord (der/die/das) gebruik je voor iets specifieks; het onbepaalde lidwoord (ein/eine/ein) voor iets willekeurigs. De ontkenning van <em>ein</em> is <em>kein</em>.</p>
+  <table><thead><tr><th></th><th>mannelijk</th><th>vrouwelijk</th><th>onzijdig</th></tr></thead><tbody>
+  <tr><td>bepaald</td><td>der Januar</td><td>die Freundschaft</td><td>das Geschenk</td></tr>
+  <tr><td>onbepaald</td><td>ein Januar</td><td>eine Freundschaft</td><td>ein Geschenk</td></tr>
+  <tr><td>ontkennend</td><td>kein Januar</td><td>keine Freundschaft</td><td>kein Geschenk</td></tr>
+  </tbody></table>
+  <div class="note">In het meervoud bestaat geen onbepaald lidwoord: <em>Geschenke</em> (cadeaus), maar wel <em>keine Geschenke</em> (geen cadeaus).</div>
+  `;
+}
+function deLes_Bezittelijk(){
+  return `
+  <h3>Het bezittelijk voornaamwoord</h3>
+  <p>Een bezittelijk voornaamwoord zegt van wie iets is, en verbuigt precies als <em>ein</em>:</p>
+  <table><thead><tr><th>persoonlijk</th><th>bezittelijk</th><th>NL</th></tr></thead><tbody>
+  <tr><td>ich</td><td>mein(e)</td><td>mijn</td></tr>
+  <tr><td>du</td><td>dein(e)</td><td>jouw</td></tr>
+  <tr><td>er/es/man</td><td>sein(e)</td><td>zijn</td></tr>
+  <tr><td>sie</td><td>ihr(e)</td><td>haar</td></tr>
+  <tr><td>wir</td><td>unser(e)</td><td>ons/onze</td></tr>
+  <tr><td>ihr</td><td>euer, eure</td><td>jullie</td></tr>
+  <tr><td>sie</td><td>ihr(e)</td><td>hun</td></tr>
+  <tr><td>Sie</td><td>Ihr(e)</td><td>uw</td></tr>
+  </tbody></table>
+  <div class="note">Bij <em>euer</em> valt vaak de tweede <em>e</em> weg zodra er een uitgang bijkomt: <em>euer Geschenk</em>, maar <em>eure Geschichte</em>.</div>
+  `;
+}
+function deLes_SKlank(){
+  return `
+  <h3>Werkwoorden met een s-klank aan het eind van de stam</h3>
+  <p>Bij stammen die eindigen op <em>s, ss, ß, z</em> of <em>x</em> (zoals <em>reisen, heißen, tanzen</em>) krijgt <em>du</em> geen extra <em>-st</em>, maar alleen <em>-t</em> — anders zou je een dubbele s-klank krijgen.</p>
+  ${tableHTML(['wohnen (regelmatig)','heißen (heten)'], PERSON_LABEL_DE.map(p=>({label:p})), (r,c)=>{
+    const wohnen=['wohne','wohnst','wohnt','wohnen','wohnt','wohnen'];
+    const heissen=['heiße','heißt','heißt','heißen','heißt','heißen'];
+    return c===0 ? wohnen[r] : heissen[r];
+  })}
+  <div class="note">Dus: <em>du heißt</em> en <em>du tanzt</em> — niet "heißst" of "tanzst".</div>
+  `;
+}
+function deLes_StamDT(){
+  return `
+  <h3>Werkwoorden met een stam die eindigt op -d of -t</h3>
+  <p>Bij stammen op <em>-t</em> of <em>-d</em> (zoals <em>arbeiten</em>) wordt een extra <em>-e-</em> ingevoegd vóór de uitgang, zodat je de vorm nog goed kunt uitspreken.</p>
+  ${tableHTML(['arbeiten (werken)'], PERSON_LABEL_DE.map(p=>({label:p})), (r)=>['arbeite','arbeitest','arbeitet','arbeiten','arbeitet','arbeiten'][r])}
+  <div class="note">Dezelfde extra <em>-e-</em> komt ook voor bij stammen op <em>-m</em>/<em>-n</em> met een medeklinker ervoor, zoals <em>öffnen → du öffnest</em>.</div>
+  `;
+}
+function deLes_PersVervanging(){
+  return `
+  <h3>Het persoonlijk voornaamwoord (als vervanging)</h3>
+  <p>Een persoonlijk voornaamwoord kan een zelfstandig naamwoord vervangen. Welk voornaamwoord je kiest, hangt af van het <strong>geslacht</strong> van het zelfstandig naamwoord:</p>
+  <table><thead><tr><th>geslacht</th><th>bijv.</th><th>vervanging</th></tr></thead><tbody>
+  <tr><td>mannelijk</td><td>der/ein/mein Fluss</td><td>er</td></tr>
+  <tr><td>vrouwelijk</td><td>die/eine/meine Brücke</td><td>sie</td></tr>
+  <tr><td>onzijdig</td><td>das/ein/mein Dorf</td><td>es</td></tr>
+  <tr><td>meervoud</td><td>die/keine/meine Einwohner</td><td>sie</td></tr>
+  </tbody></table>
+  <div class="card"><p style="margin-bottom:0;"><em>Der Fluss ist lang. Er ist blau.</em> — De rivier is lang. Hij is blauw.</p></div>
+  `;
+}
+function deLes_Geslacht(){
+  return `
+  <h3>Het geslacht van het zelfstandig naamwoord</h3>
+  <p>Elk Duits zelfstandig naamwoord heeft een vast geslacht: <strong>der</strong> (mannelijk), <strong>die</strong> (vrouwelijk) of <strong>das</strong> (onzijdig). Het meervoud krijgt altijd <em>die</em>.</p>
+  <ul style="color:var(--ink-dim);">
+    <li><strong>Mannelijk</strong> zijn vaak: mannelijke personen/dieren, beroepen, dagen, maanden, dagdelen, jaargetijden — bijv. <em>der Nachbar</em>, <em>der Montag</em>.</li>
+    <li><strong>Vrouwelijk</strong> zijn vaak: vrouwelijke personen/dieren/beroepen en woorden op <em>-heit, -keit, -ung, -schaft</em>, en de meeste woorden op <em>-e</em> — bijv. <em>die Nachbarin</em>, <em>die Wand</em>.</li>
+    <li><strong>Onzijdig</strong> zijn vaak: woorden die in het Nederlands ook het-woorden zijn, en verkleinwoorden op <em>-chen</em> — bijv. <em>das Wohnviertel</em>, <em>das Mädchen</em>.</li>
+  </ul>
+  <div class="note">Leer een zelfstandig naamwoord altijd mét het lidwoord erbij: niet alleen <em>Schreibtisch</em>, maar <em>der Schreibtisch</em>.</div>
+  `;
+}
+
 
 function deVerbOefenen(){
   const cats = {
@@ -5526,7 +5624,18 @@ function splitAlternatives(s){
   const rightCoreWords = rightWords.slice(0,-1).concat(m[1] ? [m[1]] : []);
   const suffix = m[2] || '';
   const n = rightCoreWords.length;
-  if(n===0 || leftWords.length <= n) return [left, right];
+  if(n===0) return [left, right];
+  if(leftWords.length <= n){
+    // Gedeeld STAARTwoord (bijv. "in/ naar Nederland" -> "in Nederland" / "naar Nederland"):
+    // links is korter, dus de laatste woorden van rechts vormen een gedeelde staart.
+    const sharedTail = rightCoreWords.slice(leftWords.length);
+    const altRight = rightCoreWords.slice(0, leftWords.length);
+    const tailStr = sharedTail.length ? ' ' + sharedTail.join(' ') : '';
+    return [
+      leftWords.join(' ') + tailStr + suffix,
+      altRight.join(' ') + tailStr + suffix
+    ];
+  }
   const altLeft = leftWords.slice(leftWords.length-n);
   const prefixWords = leftWords.slice(0, leftWords.length-n);
   return [
@@ -5588,9 +5697,9 @@ function renderOefenCategoryPicker(cats, questionTemplate, lemmaFn, describeForm
     </details>
     <div class="dir-toggle" data-role="dir-toggle" style="display:none;">
       <span class="dir-label">Richting:</span>
-      <button class="dir-btn active" data-dir="nl2target">NL → ${lc}</button>
+      <button class="dir-btn" data-dir="nl2target">NL → ${lc}</button>
       <button class="dir-btn" data-dir="target2nl">${lc} → NL</button>
-      <button class="dir-btn" data-dir="both">Beide</button>
+      <button class="dir-btn active" data-dir="both">Beide</button>
     </div>
     <div data-role="quiz-area" style="display:none;">
       <div class="quiz-card">
@@ -5629,7 +5738,7 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
   const streakDisplay = root.querySelector('[data-role="streak-display"]');
 
   let catKey = null;
-  let direction = 'nl2target';
+  let direction = 'both';
   let score=0,total=0,streak=0,current=null,hintTaps=0;
 
   Object.keys(cats).forEach(key=>{
@@ -5949,28 +6058,50 @@ const SPECIAL_CONTENT = {
 
 function getChapters(lang){
   const chapters = [];
+  const vt = (title)=> 'Woorden ' + title;
   if(lang==='la'){
     chapters.push({ id:'la-nouns', title:'Naamvallen', special:'la-nouns' });
     chapters.push({ id:'la-verbs', title:'Vervoegingen', special:'la-verbs' });
     LA_VOCAB.forEach((c,ci)=>{
-      chapters.push({ id:'c'+ci, title:c.title, subs: c.subs.map(s=>({ title:s.title, words: normWords(s.words,'lat') })) });
+      chapters.push({ id:'c'+ci, title:c.title, subs: c.subs.map(s=>({ title:vt(s.title), words: normWords(s.words,'lat') })) });
     });
   } else if(lang==='de'){
     chapters.push({ id:'de-nouns', title:'Naamvallen', special:'de-nouns' });
     chapters.push({ id:'de-verbs', title:'Vervoegingen', special:'de-verbs' });
+    const DE_LES_BY_HST = {
+      '1': [
+        { title:'Les: Werkwoorden & voornaamwoord', words:[], richLeren: deLes_PersoonlijkWerkwoord },
+        { title:'Les: Haben en sein', words:[], richLeren: deLes_HabenSein },
+        { title:'Les: Het lidwoord', words:[], richLeren: deLes_Lidwoord },
+        { title:'Les: Bezittelijk voornaamwoord', words:[], richLeren: deLes_Bezittelijk }
+      ],
+      '2': [
+        { title:'Les: Werkwoorden met s-klank', words:[], richLeren: deLes_SKlank },
+        { title:'Les: Werkwoorden op -d/-t', words:[], richLeren: deLes_StamDT },
+        { title:'Les: Persoonlijk voornaamwoord (vervanging)', words:[], richLeren: deLes_PersVervanging },
+        { title:'Les: Geslacht van het zelfstandig naamwoord', words:[], richLeren: deLes_Geslacht }
+      ]
+    };
     DE_VOCAB.forEach((c,ci)=>{
-      chapters.push({ id:'c'+ci, title:c.title, subs: c.subs.map(s=>({ title:s.title, words: normWords(s.words,'de') })) });
+      const hstNum = String(ci+1);
+      const vocabSubs = c.subs.map(s=>({ title:vt(s.title), words: normWords(s.words,'de') }));
+      const lesSubs = DE_LES_BY_HST[hstNum] || [];
+      chapters.push({ id:'c'+ci, title:c.title, subs: [...lesSubs, ...vocabSubs] });
     });
   } else if(lang==='fr'){
     chapters.push({ id:'fr-verbs', title:'Vervoegingen', special:'fr-verbs' });
     FR_VOCAB.forEach((c,ci)=>{
-      const subs = c.subs.map(s=>({ title:s.title, words: normWords(s.words,'fr') }));
+      const subs = c.subs.map(s=>({
+        title: (s.title==='Phrases-clés' || s.title.startsWith('Hele hoofdstuk')) ? s.title : vt(s.title),
+        words: normWords(s.words,'fr')
+      }));
       chapters.push({ id:'c'+ci, title:c.title, subs: frReorderSubs(subs) });
     });
   } else if(lang==='el'){
-    chapters.push({ id:'el-alf', title:'Hoofdstuk 1-2', subs:[{ title:'Het alfabet', words: elLetterWords(), itemLabel:'letter', matching:true, richLeren: elAlfabetLeren }] });
+    chapters.push({ id:'el-alf', title:'H1/2: het alfabet', subs:[{ title:'H1/2: het alfabet', words: elLetterWords(), itemLabel:'letter', matching:true, richLeren: elAlfabetLeren }] });
     EL_VOCAB.forEach((c,ci)=>{
-      chapters.push({ id:'c'+ci, title:c.title, subs:[{ title:'Alle woorden', words: normWords(c.words,'gr') }] });
+      const title = vt(c.title);
+      chapters.push({ id:'c'+ci, title, subs:[{ title, words: normWords(c.words,'gr') }] });
     });
   }
   return chapters;
@@ -5987,6 +6118,7 @@ function renderStartScreen(){
       btn.addEventListener('click', ()=>{
         currentLang = btn.dataset.id;
         currentScreen = 'home';
+        lessenSelection = null;
         showStart = false;
         render();
       });
@@ -6023,75 +6155,49 @@ function renderLangHome(){
 }
 
 /* ================= LESSEN ================= */
+let lessenSelection = null; // null | {special:id} | {ci,si}
+
 function renderLessen(){
   const chapters = getChapters(currentLang);
+  if(lessenSelection){
+    return renderLessonDetail(chapters);
+  }
   const wrapId = 'lessen-' + Math.random().toString(36).slice(2,8);
-  setTimeout(()=>initLessen(wrapId, chapters), 0);
+  setTimeout(()=>initLessenList(wrapId, chapters), 0);
   const blocks = chapters.map((c,ci)=>{
     if(c.special){
       return `<div class="chapter-block"><button class="chapter-header" data-ci="${ci}" data-special="1"><strong>${c.title}</strong></button></div>`;
     }
+    if(c.subs.length===1){
+      return `<div class="chapter-block"><button class="chapter-header" data-ci="${ci}" data-leaf="1"><strong>${c.title}</strong></button></div>`;
+    }
     return `<div class="chapter-block">
       <button class="chapter-header" data-ci="${ci}"><strong>${c.title}</strong><span class="chapter-arrow">▾</span></button>
       <div class="chapter-subs" data-ci="${ci}" style="display:none;">
-        ${c.subs.map((s,si)=>`<button class="sub-btn" data-ci="${ci}" data-si="${si}">${s.title} <span>(${s.words.length})</span></button>`).join('')}
+        ${c.subs.map((s,si)=>`<button class="sub-btn" data-ci="${ci}" data-si="${si}">${s.title}</button>`).join('')}
       </div>
     </div>`;
   }).join('');
   return `<div id="${wrapId}">
     <h2>Lessen</h2>
     ${blocks}
-    <div data-role="lessen-content" style="margin-top:20px;"></div>
   </div>`;
 }
 
-function initLessen(wrapId, chapters){
+function initLessenList(wrapId, chapters){
   const root = document.getElementById(wrapId);
   if(!root) return;
-  const contentEl = root.querySelector('[data-role="lessen-content"]');
-
-  function showSpecial(ci){
-    const c = chapters[ci];
-    const sc = SPECIAL_CONTENT[c.special];
-    contentEl.innerHTML = sc.leren() + `<div style="margin-top:20px;"><button class="next-btn show" data-role="special-oefen">Oefenen →</button></div><div data-role="special-quiz" style="margin-top:16px;"></div>`;
-    contentEl.querySelector('[data-role="special-oefen"]').addEventListener('click', ()=>{
-      contentEl.querySelector('[data-role="special-quiz"]').innerHTML = sc.oefenen();
-    });
-  }
-
-  function showSub(ci, si){
-    const c = chapters[ci], s = c.subs[si];
-    const matchBtn = s.matching ? `<button class="next-btn show" data-role="matching-btn" style="margin-left:8px;">Matching-spel →</button>` : '';
-    const bodyHtml = s.richLeren
-      ? s.richLeren()
-      : `<h3>${c.title} — ${s.title}</h3>
-         <div class="table-scroll"><table><thead><tr><th>${LANG_NAMES[currentLang]}</th><th>Nederlands</th></tr></thead><tbody>${s.words.map(w=>`<tr><td>${w.target}</td><td>${w.nl}</td></tr>`).join('')}</tbody></table></div>`;
-    contentEl.innerHTML = `
-      ${bodyHtml}
-      <button class="next-btn show" data-role="sub-oefen">Oefenen →</button>${matchBtn}
-      <div data-role="sub-quiz" style="margin-top:16px;"></div>
-    `;
-    contentEl.querySelector('[data-role="sub-oefen"]').addEventListener('click', ()=>{
-      contentEl.querySelector('[data-role="sub-quiz"]').innerHTML = renderOefenCategoryPicker(
-        { one: { title:s.title, sub:'', words:s.words, vocabOnly:true, srsLang:currentLang, itemLabel:s.itemLabel } },
-        null, (w)=>w.target, undefined, undefined, undefined, currentLang.toUpperCase()
-      );
-    });
-    if(s.matching){
-      contentEl.querySelector('[data-role="matching-btn"]').addEventListener('click', ()=>{
-        const quizArea = contentEl.querySelector('[data-role="sub-quiz"]');
-        quizArea.innerHTML = renderMatchingGame();
-        setTimeout(()=>initMatchingGame(quizArea), 0);
-      });
-    }
-  }
-
   root.querySelectorAll('.chapter-header').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const ci = +btn.dataset.ci;
       if(btn.dataset.special){
-        root.querySelectorAll('.chapter-header').forEach(b=>b.classList.toggle('open', b===btn));
-        showSpecial(ci);
+        lessenSelection = { special: chapters[ci].special };
+        render();
+        return;
+      }
+      if(btn.dataset.leaf){
+        lessenSelection = { ci, si:0 };
+        render();
         return;
       }
       const subsEl = root.querySelector(`.chapter-subs[data-ci="${ci}"]`);
@@ -6102,19 +6208,96 @@ function initLessen(wrapId, chapters){
   });
   root.querySelectorAll('.sub-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      root.querySelectorAll('.sub-btn').forEach(b=>b.classList.toggle('active', b===btn));
-      showSub(+btn.dataset.ci, +btn.dataset.si);
+      lessenSelection = { ci:+btn.dataset.ci, si:+btn.dataset.si };
+      render();
     });
   });
 }
 
+function renderLessonDetail(chapters){
+  const wrapId = 'lesdet-' + Math.random().toString(36).slice(2,8);
+  setTimeout(()=>initLessonDetail(wrapId, chapters), 0);
+
+  if(lessenSelection.special){
+    const sc = SPECIAL_CONTENT[lessenSelection.special];
+    return `<div id="${wrapId}">
+      <button class="back-btn" data-role="lessen-back" style="display:inline-block;">← Hoofdstukken</button>
+      ${sc.leren()}
+      <div style="margin-top:20px;"><button class="next-btn show" data-role="special-oefen">Oefenen →</button></div>
+      <div data-role="special-quiz" style="margin-top:16px;"></div>
+    </div>`;
+  }
+
+  const { ci, si } = lessenSelection;
+  const c = chapters[ci], s = c.subs[si];
+  const matchBtn = s.matching ? `<button class="next-btn show" data-role="matching-btn" style="margin-left:8px;">Matching-spel →</button>` : '';
+  const oefenBtn = s.words.length ? `<button class="next-btn show" data-role="sub-oefen">Oefenen →</button>` : '';
+  const bodyHtml = s.richLeren
+    ? s.richLeren()
+    : `<h3>${c.title} — ${s.title}</h3>
+       <div class="table-scroll"><table><thead><tr><th>${LANG_NAMES[currentLang]}</th><th>Nederlands</th></tr></thead><tbody>${s.words.map(w=>`<tr><td>${w.target}</td><td>${w.nl}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div id="${wrapId}">
+    <button class="back-btn" data-role="lessen-back" style="display:inline-block;">← Hoofdstukken</button>
+    ${bodyHtml}
+    ${oefenBtn}${matchBtn}
+    <div data-role="sub-quiz" style="margin-top:16px;"></div>
+  </div>`;
+}
+
+function initLessonDetail(wrapId, chapters){
+  const root = document.getElementById(wrapId);
+  if(!root) return;
+  root.querySelector('[data-role="lessen-back"]').addEventListener('click', ()=>{
+    lessenSelection = null;
+    render();
+  });
+
+  if(lessenSelection.special){
+    const sc = SPECIAL_CONTENT[lessenSelection.special];
+    root.querySelector('[data-role="special-oefen"]').addEventListener('click', ()=>{
+      root.querySelector('[data-role="special-quiz"]').innerHTML = sc.oefenen();
+    });
+    return;
+  }
+
+  const { ci, si } = lessenSelection;
+  const s = chapters[ci].subs[si];
+  const oefenBtn = root.querySelector('[data-role="sub-oefen"]');
+  if(oefenBtn){
+    oefenBtn.addEventListener('click', ()=>{
+      root.querySelector('[data-role="sub-quiz"]').innerHTML = renderOefenCategoryPicker(
+        { one: { title:s.title, sub:'', words:s.words, vocabOnly:true, srsLang:currentLang, itemLabel:s.itemLabel } },
+        null, (w)=>w.target, undefined, undefined, undefined, currentLang.toUpperCase()
+      );
+    });
+  }
+  if(s.matching){
+    root.querySelector('[data-role="matching-btn"]').addEventListener('click', ()=>{
+      const quizArea = root.querySelector('[data-role="sub-quiz"]');
+      quizArea.innerHTML = renderMatchingGame();
+      setTimeout(()=>initMatchingGame(quizArea), 0);
+    });
+  }
+}
+
 /* ================= OEFENEN & TOETS: SELECTIE ================= */
 function renderSelect(mode){
-  const chapters = getChapters(currentLang).filter(c=>!c.special);
+  const chapters = getChapters(currentLang)
+    .filter(c=>!c.special)
+    .map(c=>({ ...c, subs: c.subs.filter(s=>s.words.length>0) }))
+    .filter(c=>c.subs.length>0);
   const wrapId = 'sel-' + Math.random().toString(36).slice(2,8);
   setTimeout(()=>initSelect(wrapId, chapters, mode), 0);
-  const blocks = chapters.map((c,ci)=>`
-    <div class="chapter-block">
+  const blocks = chapters.map((c,ci)=>{
+    if(c.subs.length===1){
+      return `<div class="chapter-block">
+        <div class="chapter-header select-mode">
+          <span class="chk-box" data-role="chk-chapter" data-ci="${ci}">✓</span>
+          <strong style="flex:1;">${c.title}</strong>
+        </div>
+      </div>`;
+    }
+    return `<div class="chapter-block">
       <div class="chapter-header select-mode">
         <span class="chk-box" data-role="chk-chapter" data-ci="${ci}">✓</span>
         <strong style="flex:1;cursor:pointer;" data-role="chapter-toggle" data-ci="${ci}">${c.title}</strong>
@@ -6124,10 +6307,11 @@ function renderSelect(mode){
         ${c.subs.map((s,si)=>`
           <div class="sub-row">
             <span class="chk-box" data-role="chk-sub" data-ci="${ci}" data-si="${si}">✓</span>
-            <span class="sub-btn" style="cursor:default;">${s.title} <span>(${s.words.length})</span></span>
+            <span class="sub-btn" style="cursor:default;">${s.title}</span>
           </div>`).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   const modeLabel = mode==='toets' ? 'Toets' : 'Oefenen';
   return `<div id="${wrapId}">
     <h2>${modeLabel} — kies paragrafen</h2>
@@ -6157,8 +6341,9 @@ function initSelect(wrapId, chapters, mode){
 
   function updateFooter(){
     const { words, itemLabel } = collectWords();
+    const itemNoun = itemLabel==='letter' ? (words.length===1?'letter':'letters') : 'woorden';
     if(mode==='oefenen'){
-      footer.innerHTML = selected.size ? `<button class="next-btn show" data-role="start-btn">Start oefenen (${words.length} woorden geselecteerd)</button>` : '';
+      footer.innerHTML = selected.size ? `<button class="next-btn show" data-role="start-btn">Start oefenen (${words.length} ${itemNoun} geselecteerd)</button>` : '';
       const startBtn = footer.querySelector('[data-role="start-btn"]');
       if(startBtn){
         startBtn.addEventListener('click', ()=>{
@@ -6175,13 +6360,13 @@ function initSelect(wrapId, chapters, mode){
       footer.innerHTML = `
         <div class="dir-toggle" style="display:flex;">
           <span class="dir-label">Richting:</span>
-          <button class="dir-btn active" data-dir="nl2target">NL → ${currentLang.toUpperCase()}</button>
+          <button class="dir-btn" data-dir="nl2target">NL → ${currentLang.toUpperCase()}</button>
           <button class="dir-btn" data-dir="target2nl">${currentLang.toUpperCase()} → NL</button>
-          <button class="dir-btn" data-dir="both">Beide</button>
+          <button class="dir-btn active" data-dir="both">Beide</button>
         </div>
         <button class="next-btn show" data-role="start-toets" style="margin-top:12px;">Start toets (20 vragen)</button>
       `;
-      let dir = 'nl2target';
+      let dir = 'both';
       footer.querySelectorAll('.dir-btn').forEach(b=>{
         b.addEventListener('click', ()=>{
           dir = b.dataset.dir;
@@ -6268,15 +6453,17 @@ function initToetsRunner(wrapId, words, langCode, itemLabel, direction){
   const feedbackEl = root.querySelector('[data-role="tq-feedback"]');
   const nextBtn = root.querySelector('[data-role="tq-next"]');
 
+  // Elk woord komt hoogstens één keer voor in de toets.
+  const wordPool = shuffle([...words]);
+  const totalQ = Math.min(20, wordPool.length);
   const plan = direction==='both'
-    ? shuffle([...Array(10).fill('nl2target'), ...Array(10).fill('target2nl')])
-    : Array(20).fill(direction);
+    ? shuffle([...Array(Math.ceil(totalQ/2)).fill('nl2target'), ...Array(Math.floor(totalQ/2)).fill('target2nl')])
+    : Array(totalQ).fill(direction);
 
   let idx=0, wrong=0, current=null;
   const itemWord = itemLabel==='letter' ? 'de letter' : 'het woord';
 
-  function buildQ(dir){
-    const word = words[Math.floor(Math.random()*words.length)];
+  function buildQ(dir, word){
     const others = words.filter(w=>w!==word);
     if(dir==='target2nl'){
       const correct = word.nl;
@@ -6289,10 +6476,10 @@ function initToetsRunner(wrapId, words, langCode, itemLabel, direction){
   }
 
   function next(){
-    if(idx>=20){ showResult(); return; }
-    current = buildQ(plan[idx]);
+    if(idx>=totalQ){ showResult(); return; }
+    current = buildQ(plan[idx], wordPool[idx]);
     current.mode = Math.random()<(1/3) ? 'mc' : 'input';
-    progressEl.textContent = `Vraag ${idx+1} / 20`;
+    progressEl.textContent = `Vraag ${idx+1} / ${totalQ}`;
     wrongEl.textContent = `Fout: ${wrong}`;
     textEl.innerHTML = current.questionHTML;
     feedbackEl.textContent=''; feedbackEl.className='feedback';
@@ -6334,12 +6521,13 @@ function initToetsRunner(wrapId, words, langCode, itemLabel, direction){
   nextBtn.addEventListener('click', next);
 
   function showResult(){
-    const cijfer = Math.max(1, Math.min(10, 10-wrong));
+    const wrongScaled = wrong * (20/totalQ);
+    const cijfer = Math.max(1, Math.min(10, Math.round(10-wrongScaled)));
     root.innerHTML = `
       <div class="quiz-card" style="text-align:center;">
         <h2 style="margin-top:0;">Toets afgerond</h2>
         <p style="font-size:2rem;font-family:'Cinzel',serif;color:var(--gold);margin:10px 0;">Cijfer: ${cijfer}</p>
-        <p style="color:var(--ink-dim);">${wrong} fout van de 20</p>
+        <p style="color:var(--ink-dim);">${wrong} fout van de ${totalQ}</p>
         <button class="next-btn show" data-role="toets-again">Opnieuw</button>
         <button class="back-btn" data-role="toets-home" style="margin-left:8px;">Naar hoofdscherm</button>
       </div>`;
@@ -6365,7 +6553,6 @@ function render(){
   content.innerHTML = html;
 }
 
-document.getElementById('app-title').addEventListener('click', ()=>{ showStart = true; render(); });
 
 render();
 
