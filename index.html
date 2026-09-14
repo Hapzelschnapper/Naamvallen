@@ -215,7 +215,7 @@
 </style>
 </head>
 <body>
-<div class="version-badge">v1.52</div>
+<div class="version-badge">v1.53</div>
 <div class="wrap">
   <header>
     <button id="back-btn" class="back-btn" style="display:none;">← Terug</button>
@@ -5409,6 +5409,156 @@ function initNestedVocab(wrapId, chapters, lemmaFn, langCode){
 }
 
 /* ================= CONTENT: GREEK ALFABET ================= */
+/* ================= GREEK: NAAMVALLEN & WERKWOORDEN (Pallas) ================= */
+const EL_CASE_LABEL = {nom:'nominativus', gen:'genitivus', dat:'dativus', acc:'accusativus'};
+
+function elArtForms(gender){
+  const M={nomSg:'ὁ',genSg:'τοῦ',datSg:'τῷ',accSg:'τόν', nomPl:'οἱ',genPl:'τῶν',datPl:'τοῖς',accPl:'τούς'};
+  const F={nomSg:'ἡ',genSg:'τῆς',datSg:'τῇ',accSg:'τήν', nomPl:'αἱ',genPl:'τῶν',datPl:'ταῖς',accPl:'τάς'};
+  const N={nomSg:'τό',genSg:'τοῦ',datSg:'τῷ',accSg:'τό', nomPl:'τά',genPl:'τῶν',datPl:'τοῖς',accPl:'τά'};
+  return gender==='m'?M:gender==='f'?F:N;
+}
+
+const EL_DECL_WORDS = [
+  { gr:'μάχη', nl:'strijd', g:'f', group:'α/η-groep', forms:{nomSg:'μάχη',genSg:'μάχης',datSg:'μάχῃ',accSg:'μάχην',nomPl:'μάχαι',genPl:'μαχῶν',datPl:'μάχαις',accPl:'μάχας'} },
+  { gr:'χώρα', nl:'streek', g:'f', group:'α/η-groep', forms:{nomSg:'χώρα',genSg:'χώρας',datSg:'χώρᾳ',accSg:'χώραν',nomPl:'χῶραι',genPl:'χωρῶν',datPl:'χώραις',accPl:'χώρας'} },
+  { gr:'θάλαττα', nl:'zee', g:'f', group:'α/η-groep', forms:{nomSg:'θάλαττα',genSg:'θαλάττης',datSg:'θαλάττῃ',accSg:'θάλατταν',nomPl:'θάλατται',genPl:'θαλαττῶν',datPl:'θαλάτταις',accPl:'θαλάττας'} },
+  { gr:'δεσπότης', nl:'meester, heerser', g:'m', group:'α/η-groep', forms:{nomSg:'δεσπότης',genSg:'δεσπότου',datSg:'δεσπότῃ',accSg:'δεσπότην',nomPl:'δεσπόται',genPl:'δεσποτῶν',datPl:'δεσπόταις',accPl:'δεσπότας'} },
+  { gr:'δοῦλος', nl:'slaaf', g:'m', group:'o-groep', forms:{nomSg:'δοῦλος',genSg:'δούλου',datSg:'δούλῳ',accSg:'δοῦλον',nomPl:'δοῦλοι',genPl:'δούλων',datPl:'δούλοις',accPl:'δούλους'} },
+  { gr:'θηρίον', nl:'wild dier, beest', g:'n', group:'o-groep', forms:{nomSg:'θηρίον',genSg:'θηρίου',datSg:'θηρίῳ',accSg:'θηρίον',nomPl:'θηρία',genPl:'θηρίων',datPl:'θηρίοις',accPl:'θηρία'} }
+];
+
+function elNounLeren(){
+  return `
+  <h2>Naamvallen en hun functie</h2>
+  <p>Het Grieks kent <strong>vijf naamvallen</strong>: nominativus (1e), genitivus (2e), dativus (3e), accusativus (4e) en vocativus (die meestal gelijk is aan de nominativus). Aan de uitgang van een woord zie je welke functie het in de zin heeft.</p>
+  <table><thead><tr><th>Naamval</th><th>Functie</th></tr></thead><tbody>
+  <tr><td>Nominativus</td><td>onderwerp — én naamwoordelijk deel van het gezegde bij een vorm van "zijn" (bijv. <em>Ἡρακλῆς δοῦλός ἐστιν</em> — Herakles is slaaf)</td></tr>
+  <tr><td>Accusativus</td><td>lijdend voorwerp</td></tr>
+  </tbody></table>
+  <div class="note">Bij het naamwoordelijk deel van het gezegde ontbreekt vaak het lidwoord: <em>θεοὶ οὐκ εἰσὶν ἄνθρωποι</em> — goden zijn geen mensen.</div>
+
+  <h2>Het lidwoord</h2>
+  <p>Het Grieks heeft alleen een <strong>bepaald</strong> lidwoord (een onbepaald lidwoord zoals "een" bestaat niet — een naamwoord zonder lidwoord vertaal je vaak juist mét "een"). Elk zelfstandig naamwoord heeft een vast geslacht: mannelijk (ὁ), vrouwelijk (ἡ) of onzijdig (τό). Het lidwoord staat in dezelfde naamval als het bijbehorende naamwoord.</p>
+  ${tableHTML(['mannelijk','vrouwelijk'],[
+    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
+  ], (r,c)=>{
+    const keys=['nomSg','genSg','datSg','accSg'];
+    const forms = c===0 ? elArtForms('m') : elArtForms('f');
+    return forms[keys[r]];
+  }, 'Enkelvoud')}
+  ${tableHTML(['mannelijk','vrouwelijk'],[
+    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
+  ], (r,c)=>{
+    const keys=['nomPl','genPl','datPl','accPl'];
+    const forms = c===0 ? elArtForms('m') : elArtForms('f');
+    return forms[keys[r]];
+  }, 'Meervoud')}
+  ${tableHTML(['onzijdig ev.','onzijdig mv.'],[
+    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
+  ], (r,c)=>{
+    const n = elArtForms('n');
+    if(c===0) return n[['nomSg','genSg','datSg','accSg'][r]];
+    return n[['nomPl','genPl','datPl','accPl'][r]];
+  })}
+  <div class="note">Nominativus en accusativus van het onzijdig lidwoord hebben altijd dezelfde vorm — net als bij het zelfstandig naamwoord zelf.</div>
+
+  <h3>Gebruik van het lidwoord</h3>
+  <ul style="color:var(--ink-dim);">
+    <li>Het bepaald lidwoord wordt gebruikt wanneer iets al eerder genoemd is. Een naamwoord zónder lidwoord vertaal je vaak met "een": <em>ἐνταῦθα λέων οἰκεῖ</em> — daar woont <strong>een</strong> leeuw.</li>
+    <li>Het lidwoord wordt ook gebruikt bij bezit, en dan vertaal je het als bezittelijk voornaamwoord: <em>ὁ Ἡρακλῆς τὸ τόξον φέρει</em> — Herakles draagt <strong>zijn</strong> boog.</li>
+    <li>Eigennamen hebben soms wel, soms geen lidwoord: <em>ὁ Ἡρακλῆς</em> én <em>Ἡρακλῆς</em> zijn allebei gewoon "Herakles".</li>
+    <li>Bij het naamwoordelijk deel van het gezegde ontbreekt het lidwoord meestal.</li>
+  </ul>
+
+  <h2>Zelfstandig naamwoord: α/η-groep en o-groep</h2>
+  <p>Om de grote hoeveelheid zelfstandige naamwoorden te ordenen, onderscheiden we groepen. De <strong>α/η-groep</strong> heeft een stam op -α (meestal vrouwelijk, met δεσπότης als bekende mannelijke uitzondering); de <strong>o-groep</strong> heeft een stam op -ο.</p>
+  ${EL_DECL_WORDS.map(w=>tableHTML(['Enkelvoud','Meervoud'],[
+    {label:'Nom.',color:'var(--nom)'},{label:'Gen.',color:'var(--gen)'},{label:'Dat.',color:'var(--dat)'},{label:'Acc.',color:'var(--acc)'}
+  ], (r,c)=>{
+    const keys=['nomSg','genSg','datSg','accSg','nomPl','genPl','datPl','accPl'];
+    return c===0 ? w.forms[keys[r]] : w.forms[keys[r+4]];
+  }, `${w.gr} (${w.g==='m'?'m.':w.g==='f'?'v.':'o.'}) — ${w.nl}, ${w.group}`)).join('')}
+  <div class="note">
+    <strong>Onthoud:</strong><br>
+    • Nominativus en accusativus onzijdig hebben altijd dezelfde vorm.<br>
+    • Nominativus en accusativus onzijdig meervoud gaan altijd uit op -α.<br>
+    • Let op dubbelzinnige vormen: <em>χώρας</em> is óf genitivus enkelvoud óf accusativus meervoud — alleen de zin maakt duidelijk welke.
+  </div>
+  `;
+}
+
+function elNounOefenen(){
+  const cats = {
+    lidwoord: {
+      title:'Het lidwoord', sub:'mannelijk, vrouwelijk & onzijdig',
+      words: EL_DECL_WORDS.map(w=>({ gr:w.gr, nl:w.nl, g:w.g })),
+      forms: (word)=>elArtForms(word.g)
+    },
+    naamwoorden: {
+      title:'Naamvalsuitgangen', sub:'α/η-groep & o-groep',
+      words: EL_DECL_WORDS,
+      forms: (word)=>word.forms
+    }
+  };
+  return renderOefenCategoryPicker(cats, (word, formKey)=>{
+    const caseKey = formKey.slice(0,3); const number = formKey.slice(3);
+    if(cats.lidwoord.words.includes(word)){
+      return `Wat is het juiste lidwoord in de <strong>${EL_CASE_LABEL[caseKey]} ${NUM_LABEL[number]}</strong> bij <span class="w">${word.gr}</span> (${word.nl}, ${GENDER_LABEL[word.g]})?`;
+    }
+    return `Wat is de vorm in de <strong>${EL_CASE_LABEL[caseKey]} ${NUM_LABEL[number]}</strong> van <span class="w">${word.gr}</span> (${word.nl})?`;
+  }, (w)=>w.gr, (word, formKey)=>{
+    const caseKey = formKey.slice(0,3); const number = formKey.slice(3);
+    return `${EL_CASE_LABEL[caseKey]} ${NUM_LABEL[number]}`;
+  }, undefined, undefined, 'EL');
+}
+
+function elVerbLeren(){
+  return `
+  <h2>Werkwoorden: 3e persoon enkelvoud en meervoud</h2>
+  <p>Deze cursus begint met de 3e persoon (hij/zij/het en zij), de meest voorkomende vorm in de leesteksten.</p>
+  <table><thead><tr><th></th><th>uitgang</th><th>voorbeeld</th></tr></thead><tbody>
+  <tr><td>3e persoon enkelvoud</td><td>-ει of -εῖ</td><td><em>ἔχει</em> (hij/zij/het heeft), <em>ποιεῖ</em> (hij/zij/het doet, maakt)</td></tr>
+  <tr><td>3e persoon meervoud</td><td>-ουσι(ν) of -οῦσι(ν)</td><td><em>ἔχουσι(ν)</em> (zij hebben), <em>ποιοῦσι(ν)</em> (zij doen, maken)</td></tr>
+  </tbody></table>
+
+  <h3>Het werkwoord "zijn"</h3>
+  <table><thead><tr><th></th><th>vorm</th></tr></thead><tbody>
+  <tr><td>3e persoon enkelvoud</td><td><em>ἐστί(ν)</em> — (hij, zij, het) is</td></tr>
+  <tr><td>3e persoon meervoud</td><td><em>εἰσί(ν)</em> — zij zijn</td></tr>
+  </tbody></table>
+  <div class="note">Het slot-ν (het zgn. "bewegend nu") staat er vaak wel en soms niet — dat hangt af van het volgende woord, en verandert niets aan de betekenis.</div>
+
+  <h2>Niet uitgedrukt onderwerp</h2>
+  <p>In het Grieks hoeft het onderwerp niet apart genoemd te worden — dat kun je al aan de werkwoordsvorm zien, of uit de vorige zin afleiden. In het Nederlands moet er wél een onderwerp staan:</p>
+  <div class="card">
+    <p style="margin-bottom:0;"><em>ὁ Ἡρακλῆς τὴν δεινὴν ὕδραν ζητεῖ.</em> — Herakles zoekt de vreselijke slang.<br>
+    <em>τέλος δὲ τὴν ὕδραν εὑρίσκει.</em> — Tenslotte vindt <strong>hij</strong> de slang.</p>
+  </div>
+  <p style="color:var(--ink-faint);font-size:.85rem;">Het onderwerp van εὑρίσκει staat niet in de zin zelf — je haalt het (Herakles → "hij") uit de voorafgaande zin.</p>
+  `;
+}
+
+const EL_VERB_3E = [
+  {gr:'ἔχει', nl:'(hij, zij, het) heeft'}, {gr:'ποιεῖ', nl:'(hij, zij, het) doet, maakt'},
+  {gr:'φέρει', nl:'(hij, zij, het) draagt, brengt'}, {gr:'βαίνει', nl:'(hij, zij, het) gaat'},
+  {gr:'οἰκεῖ', nl:'(hij, zij, het) woont, bewoont'}, {gr:'φοβεῖ', nl:'(hij, zij, het) maakt bang'},
+  {gr:'φθείρει', nl:'(hij, zij, het) verwoest'}, {gr:'ζητεῖ', nl:'(hij, zij, het) zoekt'},
+  {gr:'εὑρίσκει', nl:'(hij, zij, het) vindt'}, {gr:'ἐστί(ν)', nl:'(hij, zij, het) is'}
+];
+const EL_VERB_3M = [
+  {gr:'ἔχουσι(ν)', nl:'zij hebben'}, {gr:'ποιοῦσι(ν)', nl:'zij doen, maken'},
+  {gr:'φοβοῦσι(ν)', nl:'zij maken bang'}, {gr:'εἰσί(ν)', nl:'zij zijn'}
+];
+
+function elVerbOefenen(){
+  const cats = {
+    enk: { title:'3e persoon enkelvoud', sub:'', words: EL_VERB_3E.map(w=>({greek:w.gr, nl:w.nl})), vocabOnly:true, srsLang:'EL' },
+    mv: { title:'3e persoon meervoud', sub:'', words: EL_VERB_3M.map(w=>({greek:w.gr, nl:w.nl})), vocabOnly:true, srsLang:'EL' }
+  };
+  return renderOefenCategoryPicker(cats, null, (w)=>w.greek, undefined, undefined, undefined, 'EL');
+}
+
 function elAlfabetLeren(){
   const wrapId = 'elleren-' + Math.random().toString(36).slice(2,8);
   setTimeout(()=>initElAlfabetLeren(wrapId), 0);
@@ -6066,7 +6216,9 @@ const SPECIAL_CONTENT = {
   'la-verbs': { leren:laVerbLeren, oefenen:laVerbOefenen },
   'de-nouns': { leren:deNounLeren, oefenen:deNounOefenen },
   'de-verbs': { leren:deVerbLeren, oefenen:deVerbOefenen },
-  'fr-verbs': { leren:frVerbLeren, oefenen:frVerbOefenen }
+  'fr-verbs': { leren:frVerbLeren, oefenen:frVerbOefenen },
+  'el-nouns': { leren:elNounLeren, oefenen:elNounOefenen },
+  'el-verbs': { leren:elVerbLeren, oefenen:elVerbOefenen }
 };
 
 function getChapters(lang){
@@ -6115,6 +6267,8 @@ function getChapters(lang){
     });
   } else if(lang==='el'){
     chapters.push({ id:'el-alf', title:'H1/2: het alfabet', subs:[{ title:'H1/2: het alfabet', words: elLetterWords(), itemLabel:'letter', matching:true, richLeren: elAlfabetLeren }] });
+    chapters.push({ id:'el-nouns', title:'Naamvallen', special:'el-nouns' });
+    chapters.push({ id:'el-verbs', title:'Vervoegingen', special:'el-verbs' });
     EL_VOCAB.forEach((c,ci)=>{
       const title = vt(c.title);
       chapters.push({ id:'c'+ci, title, subs:[{ title, words: normWords(c.words,'gr') }] });
