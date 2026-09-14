@@ -215,7 +215,7 @@
 </style>
 </head>
 <body>
-<div class="version-badge">v1.50</div>
+<div class="version-badge">v1.52</div>
 <div class="wrap">
   <header>
     <button id="back-btn" class="back-btn" style="display:none;">← Terug</button>
@@ -6017,16 +6017,29 @@ function normWords(words, key){
   return words.map(w=>({ target:w[key], nl:w.nl, bonus:w.bonus }));
 }
 
-function frReorderSubs(subs){
+function frReorderSubs(subs, hstNum){
   const lettered = subs.filter(s=>/^Paragraaf [a-zA-Z]$/.test(s.title));
   const others = subs.filter(s=>!/^Paragraaf [a-zA-Z]$/.test(s.title));
-  lettered.sort((a,b)=>{
-    const la=a.title.slice(-1), lb=b.title.slice(-1);
-    const aLower = la===la.toLowerCase(), bLower = lb===lb.toLowerCase();
-    if(aLower!==bLower) return aLower ? -1 : 1;
-    return la.localeCompare(lb);
+
+  // Voeg kleine/grote letter-varianten van dezelfde paragraaf samen (1.a en 1.A zijn dezelfde paragraaf).
+  const byLetter = {};
+  const order = [];
+  lettered.forEach(s=>{
+    const letter = s.title.slice(-1).toUpperCase();
+    if(!byLetter[letter]){ byLetter[letter] = []; order.push(letter); }
+    byLetter[letter].push(...s.words);
   });
-  const renumbered = lettered.map((s,i)=>({ title:`Paragraaf ${i+1}`, words:s.words }));
+  order.sort();
+  const renumbered = order.map(letter=>{
+    const seen = new Set(); const ded = [];
+    byLetter[letter].forEach(w=>{
+      const k = w.target + '|' + w.nl;
+      if(seen.has(k)) return;
+      seen.add(k); ded.push(w);
+    });
+    return { title:`${hstNum}.${letter}`, words: ded };
+  });
+
   others.sort((a,b)=>{
     const rank = t => t.startsWith('Hele hoofdstuk') ? 2 : (t==='Phrases-clés' ? 1 : 0);
     return rank(a.title)-rank(b.title);
@@ -6091,11 +6104,14 @@ function getChapters(lang){
   } else if(lang==='fr'){
     chapters.push({ id:'fr-verbs', title:'Vervoegingen', special:'fr-verbs' });
     FR_VOCAB.forEach((c,ci)=>{
-      const subs = c.subs.map(s=>({
+      const hstNum = (c.title.match(/\d+/) || [String(ci+1)])[0];
+      const rawSubs = c.subs.map(s=>({ title:s.title, words: normWords(s.words,'fr') }));
+      const reordered = frReorderSubs(rawSubs, hstNum);
+      const subs = reordered.map(s=>({
         title: (s.title==='Phrases-clés' || s.title.startsWith('Hele hoofdstuk')) ? s.title : vt(s.title),
-        words: normWords(s.words,'fr')
+        words: s.words
       }));
-      chapters.push({ id:'c'+ci, title:c.title, subs: frReorderSubs(subs) });
+      chapters.push({ id:'c'+ci, title:c.title, subs });
     });
   } else if(lang==='el'){
     chapters.push({ id:'el-alf', title:'H1/2: het alfabet', subs:[{ title:'H1/2: het alfabet', words: elLetterWords(), itemLabel:'letter', matching:true, richLeren: elAlfabetLeren }] });
