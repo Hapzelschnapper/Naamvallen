@@ -122,6 +122,21 @@
   .check-btn{font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;background:var(--gold);color:#221c15;border:none;border-radius:var(--radius);padding:11px 18px;cursor:pointer;}
   .check-btn:disabled{opacity:.6;cursor:default;}
 
+  .el-keyboard{margin-top:10px;background:var(--card-2);border:1px solid rgba(217,164,65,0.2);border-radius:var(--radius);padding:8px;}
+  .el-kb-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .el-kb-hint{font-size:.72rem;color:var(--ink-faint);}
+  .el-kb-row{display:flex;gap:4px;margin-bottom:4px;justify-content:center;}
+  .el-kb-key{
+    font-family:'Georgia',serif;font-size:1.05rem;min-width:30px;flex:1;max-width:42px;
+    background:var(--card);border:1px solid rgba(217,164,65,0.25);border-radius:5px;color:var(--ink);
+    padding:8px 2px;cursor:pointer;
+  }
+  .el-kb-key:hover{border-color:var(--gold);}
+  .el-kb-shift{max-width:none;flex:none;font-family:'Nunito',sans-serif;font-size:.75rem;padding:8px 12px;}
+  .el-kb-shift.active{background:var(--gold);color:#221c15;border-color:var(--gold);font-weight:700;}
+  .el-kb-wide{max-width:none;flex:0 0 50px;}
+  .el-kb-space{max-width:none;flex:1;}
+
   .match-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
   @media (max-width:420px){.match-grid{grid-template-columns:repeat(2,1fr);}}
   .match-tile{
@@ -215,7 +230,7 @@
 </style>
 </head>
 <body>
-<div class="version-badge">v1.53</div>
+<div class="version-badge">v1.58</div>
 <div class="wrap">
   <header>
     <button id="back-btn" class="back-btn" style="display:none;">← Terug</button>
@@ -231,6 +246,55 @@
 
 /* ================= GENERIC HELPERS ================= */
 function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+/* ================= GRIEKS VIRTUEEL TOETSENBORD (moderne ΕΛ-indeling) ================= */
+const EL_KB_ROWS = [
+  ['ς','ε','ρ','τ','υ','θ','ι','ο','π'],
+  ['α','σ','δ','φ','γ','η','ξ','κ','λ'],
+  ['ζ','χ','ψ','ω','β','ν','μ']
+];
+const EL_KB_UPPER = {
+  'ς':'Σ','ε':'Ε','ρ':'Ρ','τ':'Τ','υ':'Υ','θ':'Θ','ι':'Ι','ο':'Ο','π':'Π',
+  'α':'Α','σ':'Σ','δ':'Δ','φ':'Φ','γ':'Γ','η':'Η','ξ':'Ξ','κ':'Κ','λ':'Λ',
+  'ζ':'Ζ','χ':'Χ','ψ':'Ψ','ω':'Ω','β':'Β','ν':'Ν','μ':'Μ'
+};
+function elKeyboardHTML(){
+  const rows = EL_KB_ROWS.map((row,ri)=>`
+    <div class="el-kb-row">${row.map(ch=>`<button type="button" class="el-kb-key" data-ch="${ch}">${ch}</button>`).join('')}${ri===2?'<button type="button" class="el-kb-key el-kb-wide" data-action="backspace">⌫</button>':''}</div>`
+  ).join('');
+  return `<div class="el-keyboard" data-role="el-keyboard">
+    <div class="el-kb-toolbar">
+      <button type="button" class="el-kb-key el-kb-shift" data-action="shift">Hoofdletters</button>
+      <span class="el-kb-hint">Grieks toetsenbord (ΕΛ-indeling)</span>
+    </div>
+    ${rows}
+    <div class="el-kb-row"><button type="button" class="el-kb-key el-kb-space" data-action="space">spatie</button></div>
+  </div>`;
+}
+function wireElKeyboard(slotEl, inputEl){
+  if(!slotEl || !inputEl) return;
+  slotEl.innerHTML = elKeyboardHTML();
+  let shiftOn = false;
+  const kb = slotEl.querySelector('[data-role="el-keyboard"]');
+  const shiftBtn = kb.querySelector('.el-kb-shift');
+  function refreshCase(){
+    kb.querySelectorAll('.el-kb-key[data-ch]').forEach(btn=>{
+      const lower = btn.dataset.ch;
+      btn.textContent = shiftOn ? (EL_KB_UPPER[lower] || lower) : lower;
+    });
+    shiftBtn.classList.toggle('active', shiftOn);
+  }
+  kb.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.el-kb-key');
+    if(!btn) return;
+    if(btn.dataset.action === 'shift'){ shiftOn = !shiftOn; refreshCase(); return; }
+    if(btn.dataset.action === 'backspace'){ inputEl.value = inputEl.value.slice(0,-1); inputEl.focus(); return; }
+    if(btn.dataset.action === 'space'){ inputEl.value += ' '; inputEl.focus(); return; }
+    const lower = btn.dataset.ch;
+    inputEl.value += shiftOn ? (EL_KB_UPPER[lower] || lower) : lower;
+    inputEl.focus();
+  });
+}
 
 function tableHTML(colHeaders, rowHeaders, cellFn, caption){
   let html = '<div class="table-scroll"><table>';
@@ -4392,436 +4456,497 @@ const EL_ALFABET = [
 ];
 
 
-const EL_VOCAB = [
-  { title: "Hoofdstuk 3", words: [
-    {"gr": "οὐ / οὐκ / οὐχ", "nl": "niet"},
-    {"gr": "ἐστι (ν)", "nl": "(hij, zij, het) is"},
-    {"gr": "ὁ ἄνθρωπος", "nl": "mens / man"},
-    {"gr": "ὁ θεός", "nl": "god"},
-    {"gr": "εἰσι (ν)", "nl": "(zij) zijn"},
-    {"gr": "ὁ δοῦλος", "nl": "slaaf"},
-    {"gr": "τί...;", "nl": "waarom?"},
-    {"gr": "ἔχει", "nl": "(hij, zij, het) heeft"},
-    {"gr": "ἡ χώρα", "nl": "land / streek"},
-    {"gr": "οἰκεῖ", "nl": "(hij, zij, het) woont / bewoont"},
-    {"gr": "ὁ φόβος", "nl": "angst, vrees"},
-    {"gr": "δέ / δ’", "nl": "en / maar (δέ staat meestal op de 2de, soms op de 3de plaats van de zin. Meestal kun je δέ onvertaald laten, behalve na een komma)"},
-    {"gr": "φέρει", "nl": "(hij, zij, het) draagt / (hij, zij, het) brengt"},
-    {"gr": "τὸ θηρίον (mv. τὰ θηρία)", "nl": "wild dier / beest"},
-    {"gr": "βαίνει", "nl": "(hij, zij, het) gaat"},
-    {"gr": "πρός + acc.", "nl": "naar(toe) / tot"},
-    {"gr": "ἀλλά, ἀλλ’", "nl": "maar"},
-    {"gr": "οὕτως / οὕτω", "nl": "zo / op die manier"},
-    {"gr": "φεύγει (+ acc.)", "nl": "(hij, zij, het) vlucht (voor)"},
-    {"gr": "ἡ μάχη", "nl": "gevecht, strijd"},
-    {"gr": "νῦν", "nl": "nu"},
-    {"gr": "εἰς + acc.", "nl": "naar, naar binnen, tot"},
-    {"gr": "καί", "nl": "en / ook / zelfs"},
-    {"gr": "λαμβάνει", "nl": "(hij, zij, het) neemt / pakt (vast)"},
-    {"gr": "τοῦτο", "nl": "dit, dat (nom. + acc. onz.)"},
-    {"gr": "ποιεῖ", "nl": "(hij, zij, het) doet / (hij, zij, het) maakt"},
-    {"gr": "ὁ δεσπότης", "nl": "heerser / meester"},
-    {"gr": "γάρ", "nl": "want (γάρ staat op de 2de plaats van de zin)"},
+const EL_VOCAB2 = [
+  { hst: "3", texts: [
+    { title: "Tekst 3A", words: [
+      {"gr": "οὐ / οὐκ / οὐχ", "nl": "niet"},
+      {"gr": "ἐστι (ν)", "nl": "(hij, zij, het) is"},
+      {"gr": "ὁ ἄνθρωπος", "nl": "mens / man"},
+      {"gr": "ὁ θεός", "nl": "god"},
+      {"gr": "εἰσι (ν)", "nl": "(zij) zijn"},
+      {"gr": "ὁ δοῦλος", "nl": "slaaf"},
+      {"gr": "τί...;", "nl": "waarom?"},
+      {"gr": "ἔχει", "nl": "(hij, zij, het) heeft"},
+      {"gr": "ἡ χώρα", "nl": "land / streek"},
+      {"gr": "οἰκεῖ", "nl": "(hij, zij, het) woont / bewoont"},
+      {"gr": "ὁ φόβος", "nl": "angst, vrees"},
+      {"gr": "δέ / δ’", "nl": "en / maar (δέ staat meestal op de 2de, soms op de 3de plaats van de zin. Meestal kun je δέ onvertaald laten, behalve na een komma)"},
+    ]},
+    { title: "Tekst 3B", words: [
+      {"gr": "φέρει", "nl": "(hij, zij, het) draagt / (hij, zij, het) brengt"},
+      {"gr": "τὸ θηρίον (mv. τὰ θηρία)", "nl": "wild dier / beest"},
+      {"gr": "βαίνει", "nl": "(hij, zij, het) gaat"},
+      {"gr": "πρός + acc.", "nl": "naar(toe) / tot"},
+      {"gr": "ἀλλά, ἀλλ’", "nl": "maar"},
+      {"gr": "οὕτως / οὕτω", "nl": "zo / op die manier"},
+    ]},
+    { title: "Tekst 3C", words: [
+      {"gr": "φεύγει (+ acc.)", "nl": "(hij, zij, het) vlucht (voor)"},
+      {"gr": "ἡ μάχη", "nl": "gevecht, strijd"},
+      {"gr": "νῦν", "nl": "nu"},
+      {"gr": "εἰς + acc.", "nl": "naar, naar binnen, tot"},
+      {"gr": "καί", "nl": "en / ook / zelfs"},
+      {"gr": "λαμβάνει", "nl": "(hij, zij, het) neemt / pakt (vast)"},
+      {"gr": "τοῦτο", "nl": "dit, dat (nom. + acc. onz.)"},
+      {"gr": "ποιεῖ", "nl": "(hij, zij, het) doet / (hij, zij, het) maakt"},
+      {"gr": "ὁ δεσπότης", "nl": "heerser / meester"},
+      {"gr": "γάρ", "nl": "want (γάρ staat op de 2de plaats van de zin)"},
+    ]},
   ]},
-  { title: "Hoofdstuk 4", words: [
-    {"gr": "ὁ φίλος", "nl": "vriend"},
-    {"gr": "ἐνταῦθα", "nl": "daar"},
-    {"gr": "μέγας / μεγάλη / μέγα", "nl": "groot"},
-    {"gr": "δεινός / δεινή / δεινόν", "nl": "verschrikkelijk / geducht"},
-    {"gr": "φοβερός / φοβερά / φοβερόν", "nl": "angstaanjagend"},
-    {"gr": "μέν", "nl": "geeft aan dat er nóg een zin komt; die tweede zin begint met δέ; μέν blijft onvertaald"},
-    {"gr": "ἡ κεφαλή", "nl": "hoofd / kop"},
-    {"gr": "θνητός", "nl": "sterfelijk"},
-    {"gr": "ἀθάνατος", "nl": "onsterfelijk"},
-    {"gr": "ζητεῖ", "nl": "(hij) zoekt"},
-    {"gr": "εὑρίσκει", "nl": "(hij) vindt / ontdekt / treft aan"},
-    {"gr": "μακρός / μακρά / μακρόν", "nl": "lang"},
-    {"gr": "ἔπειτα", "nl": "daarna"},
-    {"gr": "μία", "nl": "één (vrouwelijk)"},
-    {"gr": "οὐδέν", "nl": "niets"},
-    {"gr": "τί...;", "nl": "wat? / waarom?"},
-    {"gr": "πρῶτον μὲν... / ἔπειτα δέ", "nl": "eerst... / daarna"},
-    {"gr": "ἀποκτείνει", "nl": "(hij) doodt"},
-    {"gr": "καλεῖ", "nl": "(hij) roept"},
-    {"gr": "νέος / νέα / νέον", "nl": "nieuw / jong"},
-    {"gr": "ἄλλος / ἄλλη / ἄλλο", "nl": "ander"},
-    {"gr": "ἕκαστος / ἑκάστη / ἕκαστον", "nl": "ieder"},
-    {"gr": "αὐτίκα", "nl": "meteen / onmiddellijk"},
-    {"gr": "ἡ πέτρα", "nl": "rots / rotsblok"},
-    {"gr": "κρύπτει", "nl": "(hij) verbergt"},
+  { hst: "4", texts: [
+    { title: "Tekst 4A", words: [
+      {"gr": "ὁ φίλος", "nl": "vriend"},
+      {"gr": "ἐνταῦθα", "nl": "daar"},
+      {"gr": "μέγας / μεγάλη / μέγα", "nl": "groot"},
+      {"gr": "δεινός / δεινή / δεινόν", "nl": "verschrikkelijk / geducht"},
+      {"gr": "φοβερός / φοβερά / φοβερόν", "nl": "angstaanjagend"},
+      {"gr": "μέν", "nl": "geeft aan dat er nóg een zin komt; die tweede zin begint met δέ; μέν blijft onvertaald"},
+      {"gr": "ἡ κεφαλή", "nl": "hoofd / kop"},
+      {"gr": "θνητός", "nl": "sterfelijk"},
+      {"gr": "ἀθάνατος", "nl": "onsterfelijk"},
+      {"gr": "ζητεῖ", "nl": "(hij) zoekt"},
+      {"gr": "εὑρίσκει", "nl": "(hij) vindt / ontdekt / treft aan"},
+      {"gr": "μακρός / μακρά / μακρόν", "nl": "lang"},
+      {"gr": "ἔπειτα", "nl": "daarna"},
+      {"gr": "μία", "nl": "één (vrouwelijk)"},
+      {"gr": "οὐδέν", "nl": "niets"},
+    ]},
+    { title: "Tekst 4B", words: [
+      {"gr": "τί...;", "nl": "wat? / waarom?"},
+      {"gr": "πρῶτον μὲν... / ἔπειτα δέ", "nl": "eerst... / daarna"},
+      {"gr": "ἀποκτείνει", "nl": "(hij) doodt"},
+      {"gr": "καλεῖ", "nl": "(hij) roept"},
+    ]},
+    { title: "Tekst 4C", words: [
+      {"gr": "νέος / νέα / νέον", "nl": "nieuw / jong"},
+      {"gr": "ἄλλος / ἄλλη / ἄλλο", "nl": "ander"},
+      {"gr": "ἕκαστος / ἑκάστη / ἕκαστον", "nl": "ieder"},
+      {"gr": "αὐτίκα", "nl": "meteen / onmiddellijk"},
+      {"gr": "ἡ πέτρα", "nl": "rots / rotsblok"},
+      {"gr": "κρύπτει", "nl": "(hij) verbergt"},
+    ]},
   ]},
-  { title: "Hoofdstuk 5", words: [
-    {"gr": "ἡ βασίλεια", "nl": "koningin"},
-    {"gr": "μάλα", "nl": "erg / zeer (bijwoord)"},
-    {"gr": "ἀνδρεῖος", "nl": "dapper"},
-    {"gr": "καλός", "nl": "mooi"},
-    {"gr": "τὸ δῶρον", "nl": "geschenk / cadeau"},
-    {"gr": "ὁ πόλεμος", "nl": "oorlog"},
-    {"gr": "φιλέω", "nl": "houden van / beminnen"},
-    {"gr": "φίλος", "nl": "geliefd / dierbaar"},
-    {"gr": "θαυμάζω", "nl": "bewonderen, zich verwonderen"},
-    {"gr": "οὖν", "nl": "dan, nu (als een verhaal verder gaat) / dus (in een conclusie)"},
-    {"gr": "αἰτέω (+ 2 acc.)", "nl": "(iemand) vragen (om)"},
-    {"gr": "ἐγώ", "nl": "ik (pers. vnw.)"},
-    {"gr": "ἐπιθυμέω (+ gen.)", "nl": "verlangen (naar) / begeren"},
-    {"gr": "ἐθέλω", "nl": "willen / bereid zijn"},
-    {"gr": "σύ", "nl": "jij / u (pers. vnw.)"},
-    {"gr": "ἐπί (+ acc.)", "nl": "op...af / naar"},
-    {"gr": "πέμπω (inf. πέμπειν)", "nl": "sturen / zenden"},
-    {"gr": "ὁ ἑταῖρος", "nl": "vriend / makker"},
-    {"gr": "πολλοί", "nl": "veel / velen"},
-    {"gr": "ἐν + dat.", "nl": "in / op / bij"},
-    {"gr": "ἡ οἰκία", "nl": "huis"},
-    {"gr": "...τε καί...", "nl": "en (verbindt twee woord(groep)en nauw met elkaar)"},
-    {"gr": "αὐτῷ", "nl": "(aan/voor) hem (dativus pers. vnw.)"},
-    {"gr": "λέγω", "nl": "zeggen"},
-    {"gr": "ἐνθάδε", "nl": "hier(heen)"},
-    {"gr": "ἥκω", "nl": "komen / gekomen zijn"},
-    {"gr": "αὐτῇ", "nl": "(aan/voor) haar (dativus pers. vnw.)"},
-    {"gr": "ὅτι", "nl": "dat (voegwoord) / omdat"},
-    {"gr": "σέ / σε", "nl": "jou / je / u (accusativus pers. vnw.)"},
-    {"gr": "σός / σή / σόν", "nl": "jouw / uw (bezittelijk vnw.)"},
-    {"gr": "μοί / μοι", "nl": "(aan/voor) mij / me (dativus pers. vnw.)"},
-    {"gr": "παρέχω (inf. παρέχειν)", "nl": "verschaffen / geven"},
-    {"gr": "λύω", "nl": "losmaken"},
-    {"gr": "ἡ θεός", "nl": "godin"},
-    {"gr": "ὁμοῖος + dat.", "nl": "gelijk aan / gelijkend op"},
-    {"gr": "ὁ ξένος", "nl": "vreemdeling"},
-    {"gr": "κακός", "nl": "slecht"},
-    {"gr": "τὸ ἔργον", "nl": "werk / daad"},
-    {"gr": "μέλλω + inf.", "nl": "op het punt staan om / van plan zijn / zullen"},
-    {"gr": "αὐτήν", "nl": "haar (accusativus pers. vnw.)"},
-    {"gr": "μετά + gen.", "nl": "(samen) met"},
-    {"gr": "τὰ ὅπλα", "nl": "wapens"},
-    {"gr": "ὁ ἵππος", "nl": "paard"},
-    {"gr": "αὐτῆς", "nl": "(van) haar (genitivus pers. vnw.)"},
-    {"gr": "κελεύω + acc. + inf.", "nl": "bevelen / verzoeken / vragen om"},
-    {"gr": "ἐκ + gen.", "nl": "uit"},
-    {"gr": "ἄγω (+ inf. ἄγειν)", "nl": "brengen / leiden"},
-    {"gr": "ὁ νεκρός", "nl": "lijk / dode"},
-    {"gr": "ὁ λόγος", "nl": "woord"},
-    {"gr": "αὐτόν", "nl": "hem (accusativus pers. vnw.)"},
-    {"gr": "κρατέω + gen.", "nl": "macht hebben over, zich meester maken van, overwinnen"},
-    {"gr": "ἔξεστι(ν) + dat. (+ inf.)", "nl": "het is (voor iemand) mogelijk/ geoorloofd om"},
-    {"gr": "ἐπί + dat.", "nl": "bij / op / aan"},
-    {"gr": "αἱ πύλαι", "nl": "poort / ingang"},
-    {"gr": "αὐτοῦ", "nl": "(van) hem (genitivus pers. vnw.)"},
-    {"gr": "τότε", "nl": "dan / toen"},
-    {"gr": "ἰσχυρός", "nl": "sterk / krachtig"},
+  { hst: "5", texts: [
+    { title: "Tekst 5A", words: [
+      {"gr": "ἡ βασίλεια", "nl": "koningin"},
+      {"gr": "μάλα", "nl": "erg / zeer (bijwoord)"},
+      {"gr": "ἀνδρεῖος", "nl": "dapper"},
+      {"gr": "καλός", "nl": "mooi"},
+      {"gr": "τὸ δῶρον", "nl": "geschenk / cadeau"},
+      {"gr": "ὁ πόλεμος", "nl": "oorlog"},
+      {"gr": "φιλέω", "nl": "houden van / beminnen"},
+      {"gr": "φίλος", "nl": "geliefd / dierbaar"},
+      {"gr": "θαυμάζω", "nl": "bewonderen, zich verwonderen"},
+      {"gr": "οὖν", "nl": "dan, nu (als een verhaal verder gaat) / dus (in een conclusie)"},
+      {"gr": "αἰτέω (+ 2 acc.)", "nl": "(iemand) vragen (om)"},
+      {"gr": "ἐγώ", "nl": "ik (pers. vnw.)"},
+      {"gr": "ἐπιθυμέω (+ gen.)", "nl": "verlangen (naar) / begeren"},
+      {"gr": "ἐθέλω", "nl": "willen / bereid zijn"},
+      {"gr": "σύ", "nl": "jij / u (pers. vnw.)"},
+      {"gr": "ἐπί (+ acc.)", "nl": "op...af / naar"},
+      {"gr": "πέμπω (inf. πέμπειν)", "nl": "sturen / zenden"},
+      {"gr": "ὁ ἑταῖρος", "nl": "vriend / makker"},
+      {"gr": "πολλοί", "nl": "veel / velen"},
+    ]},
+    { title: "Tekst 5B", words: [
+      {"gr": "ἐν + dat.", "nl": "in / op / bij"},
+      {"gr": "ἡ οἰκία", "nl": "huis"},
+      {"gr": "...τε καί...", "nl": "en (verbindt twee woord(groep)en nauw met elkaar)"},
+      {"gr": "αὐτῷ", "nl": "(aan/voor) hem (dativus pers. vnw.)"},
+      {"gr": "λέγω", "nl": "zeggen"},
+      {"gr": "ἐνθάδε", "nl": "hier(heen)"},
+      {"gr": "ἥκω", "nl": "komen / gekomen zijn"},
+      {"gr": "αὐτῇ", "nl": "(aan/voor) haar (dativus pers. vnw.)"},
+      {"gr": "ὅτι", "nl": "dat (voegwoord) / omdat"},
+      {"gr": "σέ / σε", "nl": "jou / je / u (accusativus pers. vnw.)"},
+      {"gr": "σός / σή / σόν", "nl": "jouw / uw (bezittelijk vnw.)"},
+      {"gr": "μοί / μοι", "nl": "(aan/voor) mij / me (dativus pers. vnw.)"},
+      {"gr": "παρέχω (inf. παρέχειν)", "nl": "verschaffen / geven"},
+      {"gr": "λύω", "nl": "losmaken"},
+      {"gr": "ἡ θεός", "nl": "godin"},
+      {"gr": "ὁμοῖος + dat.", "nl": "gelijk aan / gelijkend op"},
+      {"gr": "ὁ ξένος", "nl": "vreemdeling"},
+      {"gr": "κακός", "nl": "slecht"},
+      {"gr": "τὸ ἔργον", "nl": "werk / daad"},
+      {"gr": "μέλλω + inf.", "nl": "op het punt staan om / van plan zijn / zullen"},
+      {"gr": "αὐτήν", "nl": "haar (accusativus pers. vnw.)"},
+      {"gr": "μετά + gen.", "nl": "(samen) met"},
+      {"gr": "τὰ ὅπλα", "nl": "wapens"},
+      {"gr": "ὁ ἵππος", "nl": "paard"},
+      {"gr": "αὐτῆς", "nl": "(van) haar (genitivus pers. vnw.)"},
+    ]},
+    { title: "Tekst 5C", words: [
+      {"gr": "κελεύω + acc. + inf.", "nl": "bevelen / verzoeken / vragen om"},
+      {"gr": "ἐκ + gen.", "nl": "uit"},
+      {"gr": "ἄγω (+ inf. ἄγειν)", "nl": "brengen / leiden"},
+      {"gr": "ὁ νεκρός", "nl": "lijk / dode"},
+      {"gr": "ὁ λόγος", "nl": "woord"},
+      {"gr": "αὐτόν", "nl": "hem (accusativus pers. vnw.)"},
+      {"gr": "κρατέω + gen.", "nl": "macht hebben over, zich meester maken van, overwinnen"},
+      {"gr": "ἔξεστι(ν) + dat. (+ inf.)", "nl": "het is (voor iemand) mogelijk/ geoorloofd om"},
+      {"gr": "ἐπί + dat.", "nl": "bij / op / aan"},
+      {"gr": "αἱ πύλαι", "nl": "poort / ingang"},
+      {"gr": "αὐτοῦ", "nl": "(van) hem (genitivus pers. vnw.)"},
+      {"gr": "τότε", "nl": "dan / toen"},
+      {"gr": "ἰσχυρός", "nl": "sterk / krachtig"},
+    ]},
   ]},
-  { title: "Hoofdstuk 6", words: [
-    {"gr": "λείπω", "nl": "(ver)laten"},
-    {"gr": "αἱ Ἀθῆναι", "nl": "Athene (de stad)"},
-    {"gr": "τὸ τέκνον", "nl": "kind"},
-    {"gr": "τὸ πλοῖον", "nl": "schip"},
-    {"gr": "ἡ νῆσος", "nl": "eiland"},
-    {"gr": "πλέω", "nl": "varen"},
-    {"gr": "διά + acc.", "nl": "door, wegens"},
-    {"gr": "ἡ λύπη", "nl": "verdriet"},
-    {"gr": "μετά + acc.", "nl": "na"},
-    {"gr": "ὁ χρόνος", "nl": "tijd"},
-    {"gr": "Ἀθηναῖος", "nl": "Atheens"},
-    {"gr": "ὁ Ἀθηναῖος", "nl": "Athener"},
-    {"gr": "σῴζω", "nl": "redden"},
-    {"gr": "ὁ υἱός", "nl": "zoon"},
-    {"gr": "εἰμί", "nl": "ik ben"},
-    {"gr": "εἰ", "nl": "als, indien"},
-    {"gr": "ἐμέ, με", "nl": "mij, me (accusativus pers. vnw.)"},
-    {"gr": "γαμέω (+ acc.)", "nl": "trouwen (met)"},
-    {"gr": "ὁ γάμος", "nl": "huwelijk"},
-    {"gr": "χαίρω (+ dat.)", "nl": "blij zijn (met), zich verheugen (over)"},
-    {"gr": "αὐτοῖς", "nl": "(aan/voor) hen (dativus pers. vnw.)"},
-    {"gr": "ἡ θύρα", "nl": "deur"},
-    {"gr": "πάλιν", "nl": "weer, opnieuw (terug)"},
-    {"gr": "ἡ ἡμέρα", "nl": "dag"},
-    {"gr": "ἀκούω (+gen. bij personen horen, luisteren naar)", "nl": "horen"},
-    {"gr": "μου, ἐμοῦ", "nl": "(van) mij, mijn (genitivus pers. vnw.)"},
-    {"gr": "μένω (+ acc.)", "nl": "blijven (wachten op)"},
-    {"gr": "ὑμεῖς", "nl": "jullie, u (pers. vnw.)"},
-    {"gr": "δή", "nl": "(geeft nadruk) dan, dus (vaak moeilijk te vertalen)"},
-    {"gr": "δακρύω", "nl": "huilen"},
-    {"gr": "ἡμεῖς", "nl": "wij (pers. vnw.)"},
-    {"gr": "εἶναι", "nl": "(te) zijn (infinitivus)"},
-    {"gr": "ὧδε", "nl": "zo, als volgt"},
-    {"gr": "θαυμάζω ὅτι", "nl": "zich erover verwonderen dat"},
-    {"gr": "μή", "nl": "niet (bij gebiedende wijs)"},
-    {"gr": "μόνος", "nl": "alleen"},
-    {"gr": "πρός + dat.", "nl": "bij"},
-    {"gr": "καθεύδω", "nl": "slapen"},
-    {"gr": "αἴρω", "nl": "optillen, oppakken"},
-    {"gr": "ἡ βία", "nl": "kracht, geweld"},
-    {"gr": "ἡ ἀνδρεία", "nl": "moed, dapperheid"},
-    {"gr": "ἡμᾶς", "nl": "ons (accusativus pers. vnw.)"},
-    {"gr": "ἔξω", "nl": "buiten"},
-    {"gr": "ἡμῖν", "nl": "(aan/voor) ons (dativus pers. vnw.)"},
-    {"gr": "ἐκβαίνω", "nl": "gaan uit"},
-    {"gr": "ἡ σωτηρία", "nl": "redding, behoud"},
-    {"gr": "ἡ θάλαττα", "nl": "zee"},
-    {"gr": "εἰσβαίνω", "nl": "ingaan, komen in"},
-    {"gr": "ὁ ἄνεμος", "nl": "wind"},
+  { hst: "6", texts: [
+    { title: "Tekst 6A", words: [
+      {"gr": "λείπω", "nl": "(ver)laten"},
+      {"gr": "αἱ Ἀθῆναι", "nl": "Athene (de stad)"},
+      {"gr": "τὸ τέκνον", "nl": "kind"},
+      {"gr": "τὸ πλοῖον", "nl": "schip"},
+      {"gr": "ἡ νῆσος", "nl": "eiland"},
+      {"gr": "πλέω", "nl": "varen"},
+      {"gr": "διά + acc.", "nl": "door, wegens"},
+      {"gr": "ἡ λύπη", "nl": "verdriet"},
+      {"gr": "μετά + acc.", "nl": "na"},
+      {"gr": "ὁ χρόνος", "nl": "tijd"},
+      {"gr": "Ἀθηναῖος", "nl": "Atheens"},
+      {"gr": "ὁ Ἀθηναῖος", "nl": "Athener"},
+      {"gr": "σῴζω", "nl": "redden"},
+      {"gr": "ὁ υἱός", "nl": "zoon"},
+      {"gr": "εἰμί", "nl": "ik ben"},
+      {"gr": "εἰ", "nl": "als, indien"},
+      {"gr": "ἐμέ, με", "nl": "mij, me (accusativus pers. vnw.)"},
+      {"gr": "γαμέω (+ acc.)", "nl": "trouwen (met)"},
+      {"gr": "ὁ γάμος", "nl": "huwelijk"},
+      {"gr": "χαίρω (+ dat.)", "nl": "blij zijn (met), zich verheugen (over)"},
+    ]},
+    { title: "Tekst 6B", words: [
+      {"gr": "αὐτοῖς", "nl": "(aan/voor) hen (dativus pers. vnw.)"},
+      {"gr": "ἡ θύρα", "nl": "deur"},
+      {"gr": "πάλιν", "nl": "weer, opnieuw (terug)"},
+      {"gr": "ἡ ἡμέρα", "nl": "dag"},
+      {"gr": "ἀκούω (+gen. bij personen horen, luisteren naar)", "nl": "horen"},
+      {"gr": "μου, ἐμοῦ", "nl": "(van) mij, mijn (genitivus pers. vnw.)"},
+      {"gr": "μένω (+ acc.)", "nl": "blijven (wachten op)"},
+      {"gr": "ὑμεῖς", "nl": "jullie, u (pers. vnw.)"},
+      {"gr": "δή", "nl": "(geeft nadruk) dan, dus (vaak moeilijk te vertalen)"},
+      {"gr": "δακρύω", "nl": "huilen"},
+      {"gr": "ἡμεῖς", "nl": "wij (pers. vnw.)"},
+      {"gr": "εἶναι", "nl": "(te) zijn (infinitivus)"},
+      {"gr": "ὧδε", "nl": "zo, als volgt"},
+      {"gr": "θαυμάζω ὅτι", "nl": "zich erover verwonderen dat"},
+      {"gr": "μή", "nl": "niet (bij gebiedende wijs)"},
+      {"gr": "μόνος", "nl": "alleen"},
+      {"gr": "πρός + dat.", "nl": "bij"},
+    ]},
+    { title: "Tekst 6C", words: [
+      {"gr": "καθεύδω", "nl": "slapen"},
+      {"gr": "αἴρω", "nl": "optillen, oppakken"},
+      {"gr": "ἡ βία", "nl": "kracht, geweld"},
+      {"gr": "ἡ ἀνδρεία", "nl": "moed, dapperheid"},
+      {"gr": "ἡμᾶς", "nl": "ons (accusativus pers. vnw.)"},
+      {"gr": "ἔξω", "nl": "buiten"},
+      {"gr": "ἡμῖν", "nl": "(aan/voor) ons (dativus pers. vnw.)"},
+      {"gr": "ἐκβαίνω", "nl": "gaan uit"},
+      {"gr": "ἡ σωτηρία", "nl": "redding, behoud"},
+      {"gr": "ἡ θάλαττα", "nl": "zee"},
+      {"gr": "εἰσβαίνω", "nl": "ingaan, komen in"},
+      {"gr": "ὁ ἄνεμος", "nl": "wind"},
+    ]},
   ]},
-  { title: "Hoofdstuk 7", words: [
-    {"gr": "αὐτός, αὐτή, αὐτό", "nl": "zelf (bijvoeglijk gebruikt)"},
-    {"gr": "ἡ ἐλευθερία", "nl": "vrijheid"},
-    {"gr": "τυγχάνω (+ gen.)", "nl": "treffen (krijgen)"},
-    {"gr": "ἡ παρθένος", "nl": "(ongetrouwd) meisje, maagd"},
-    {"gr": "μετέχω + gen.", "nl": "deelhebben aan, deelnemen aan"},
-    {"gr": "ἡ φυγή", "nl": "vlucht"},
-    {"gr": "οὐδείς", "nl": "niemand (lett. zelfs niet één)"},
-    {"gr": "ἱερός (+ gen.)", "nl": "heilig (gewijd aan)"},
-    {"gr": "ἐπί (+ gen.)", "nl": "op"},
-    {"gr": "πολύς, πολλή, πολύ", "nl": "veel"},
-    {"gr": "ὁ οἶνος", "nl": "wijn"},
-    {"gr": "ὁ κίνδυνος", "nl": "gevaar"},
-    {"gr": "ἑαυτῷ", "nl": "(voor, tot, bij) zichzelf (dativus)"},
-    {"gr": "ἀποφέρω", "nl": "wegbrengen, wegvoeren"},
-    {"gr": "νομίζω (+ 2 acc.)", "nl": "menen (beschouwen als, vinden)"},
-    {"gr": "αἴτιος (+ gen.)", "nl": "verantwoordelijk voor, schuldig aan"},
-    {"gr": "ὁ ἥλιος", "nl": "zon"},
-    {"gr": "ὁ ὕπνος", "nl": "slaap"},
-    {"gr": "ἐγείρω", "nl": "(op)wekken, wakker maken"},
-    {"gr": "πλήν + gen.", "nl": "behalve"},
-    {"gr": "αὖθις", "nl": "opnieuw, weer"},
-    {"gr": "ἡ φωνή", "nl": "stem"},
-    {"gr": "ὥσπερ", "nl": "zoals"},
-    {"gr": "ὁ αὐτός", "nl": "dezelfde"},
-    {"gr": "ἄνευ + gen.", "nl": "zonder"},
-    {"gr": "ἀναβαίνω", "nl": "omhoog gaan, beklimmen"},
-    {"gr": "βλέπω", "nl": "kijken"},
-    {"gr": "ἀεί", "nl": "altijd"},
-    {"gr": "ἡ ἡδονή", "nl": "genot, vreugde"},
-    {"gr": "κατέχω", "nl": "in zijn macht hebben, vasthouden, beheersen"},
-    {"gr": "μόνον", "nl": "slechts, alleen maar (bijwoord)"},
-    {"gr": "οὐ μόνον..., ἀλλὰ καί", "nl": "niet alleen..., maar ook"},
-    {"gr": "ἐμός, ἐμή, ἐμόν", "nl": "mijn (bezittelijk vnw.)"},
-    {"gr": "ὁ βίος", "nl": "leven"},
-    {"gr": "μετὰ ταῦτα", "nl": "na dit, daarna"},
-    {"gr": "ῥίπτω", "nl": "werpen, gooien"},
-    {"gr": "ἑαυτόν", "nl": "zichzelf (accusativus)"},
-    {"gr": "ἀπό (+ gen.)", "nl": "vanaf"},
-    {"gr": "πίπτω", "nl": "vallen"},
-    {"gr": "ἀποθνῄσκω", "nl": "sterven"},
-    {"gr": "τίς...;", "nl": "1. wie, wat? welk(e)?"},
-    {"gr": "ἡ αἰτία", "nl": "oorzaak"},
-    {"gr": "ἡ συμφορά", "nl": "gebeurtenis (ongeluk)"},
-    {"gr": "περί (+ gen.)", "nl": "om, over"},
-    {"gr": "φροντίζω (+ gen.)", "nl": "zich bekommeren om"},
-    {"gr": "ὁ θάνατος", "nl": "de dood"},
+  { hst: "7", texts: [
+    { title: "Tekst 7A", words: [
+      {"gr": "αὐτός, αὐτή, αὐτό", "nl": "zelf (bijvoeglijk gebruikt)"},
+      {"gr": "ἡ ἐλευθερία", "nl": "vrijheid"},
+      {"gr": "τυγχάνω (+ gen.)", "nl": "treffen (krijgen)"},
+      {"gr": "ἡ παρθένος", "nl": "(ongetrouwd) meisje, maagd"},
+      {"gr": "μετέχω + gen.", "nl": "deelhebben aan, deelnemen aan"},
+      {"gr": "ἡ φυγή", "nl": "vlucht"},
+      {"gr": "οὐδείς", "nl": "niemand (lett. zelfs niet één)"},
+      {"gr": "ἱερός (+ gen.)", "nl": "heilig (gewijd aan)"},
+      {"gr": "ἐπί (+ gen.)", "nl": "op"},
+      {"gr": "πολύς, πολλή, πολύ", "nl": "veel"},
+      {"gr": "ὁ οἶνος", "nl": "wijn"},
+      {"gr": "ὁ κίνδυνος", "nl": "gevaar"},
+      {"gr": "ἑαυτῷ", "nl": "(voor, tot, bij) zichzelf (dativus)"},
+      {"gr": "ἀποφέρω", "nl": "wegbrengen, wegvoeren"},
+      {"gr": "νομίζω (+ 2 acc.)", "nl": "menen (beschouwen als, vinden)"},
+      {"gr": "αἴτιος (+ gen.)", "nl": "verantwoordelijk voor, schuldig aan"},
+    ]},
+    { title: "Tekst 7B", words: [
+      {"gr": "ὁ ἥλιος", "nl": "zon"},
+      {"gr": "ὁ ὕπνος", "nl": "slaap"},
+      {"gr": "ἐγείρω", "nl": "(op)wekken, wakker maken"},
+      {"gr": "πλήν + gen.", "nl": "behalve"},
+      {"gr": "αὖθις", "nl": "opnieuw, weer"},
+      {"gr": "ἡ φωνή", "nl": "stem"},
+      {"gr": "ὥσπερ", "nl": "zoals"},
+      {"gr": "ὁ αὐτός", "nl": "dezelfde"},
+      {"gr": "ἄνευ + gen.", "nl": "zonder"},
+    ]},
+    { title: "Tekst 7C", words: [
+      {"gr": "ἀναβαίνω", "nl": "omhoog gaan, beklimmen"},
+      {"gr": "βλέπω", "nl": "kijken"},
+      {"gr": "ἀεί", "nl": "altijd"},
+      {"gr": "ἡ ἡδονή", "nl": "genot, vreugde"},
+      {"gr": "κατέχω", "nl": "in zijn macht hebben, vasthouden, beheersen"},
+      {"gr": "μόνον", "nl": "slechts, alleen maar (bijwoord)"},
+      {"gr": "οὐ μόνον..., ἀλλὰ καί", "nl": "niet alleen..., maar ook"},
+      {"gr": "ἐμός, ἐμή, ἐμόν", "nl": "mijn (bezittelijk vnw.)"},
+      {"gr": "ὁ βίος", "nl": "leven"},
+      {"gr": "μετὰ ταῦτα", "nl": "na dit, daarna"},
+      {"gr": "ῥίπτω", "nl": "werpen, gooien"},
+      {"gr": "ἑαυτόν", "nl": "zichzelf (accusativus)"},
+      {"gr": "ἀπό (+ gen.)", "nl": "vanaf"},
+      {"gr": "πίπτω", "nl": "vallen"},
+      {"gr": "ἀποθνῄσκω", "nl": "sterven"},
+      {"gr": "τίς...;", "nl": "1. wie, wat? welk(e)?"},
+      {"gr": "ἡ αἰτία", "nl": "oorzaak"},
+      {"gr": "ἡ συμφορά", "nl": "gebeurtenis (ongeluk)"},
+      {"gr": "περί (+ gen.)", "nl": "om, over"},
+      {"gr": "φροντίζω (+ gen.)", "nl": "zich bekommeren om"},
+      {"gr": "ὁ θάνατος", "nl": "de dood"},
+    ]},
   ]},
-  { title: "Hoofdstuk 8", words: [
-    {"gr": "πάρειμι", "nl": "aanwezig zijn"},
-    {"gr": "ὁ στρατηγός", "nl": "legeraanvoerder"},
-    {"gr": "ὁ ναύτης", "nl": "zeeman, matroos"},
-    {"gr": "ὁ στρατιώτης", "nl": "soldaat"},
-    {"gr": "οἱ ἄνδρες (ἀνδρῶν)", "nl": "mannen"},
-    {"gr": "πάντες (πάντων)", "nl": "alle(n)"},
-    {"gr": "ὁ νοῦς", "nl": "geest, verstand"},
-    {"gr": "ἐν νῷ ἔχω", "nl": "van plan zijn (lett. in de geest hebben)"},
-    {"gr": "παύω", "nl": "(doen/laten) stoppen, (doen/laten) ophouden"},
-    {"gr": "κωλύω (+ inf.)", "nl": "verhinderen, beletten (om)"},
-    {"gr": "ἅμα", "nl": "tegelijk, tegelijkertijd"},
-    {"gr": "τόδε, mv. τάδε", "nl": "dit (het volgende)"},
-    {"gr": "οὐδέ", "nl": "en niet, maar niet (ook niet, zelfs niet)"},
-    {"gr": "ἐχθρός (+ dat.)", "nl": "gehaat (bij), vijandig (aan)"},
-    {"gr": "ὁ πατήρ", "nl": "vader"},
-    {"gr": "ἡ τύχη", "nl": "lot"},
-    {"gr": "ὅμως", "nl": "toch"},
-    {"gr": "ὁ ἄγγελος", "nl": "bode"},
-    {"gr": "ἡ ἀλήθεια", "nl": "waarheid"},
-    {"gr": "ἄγγελλω", "nl": "berichten, melden"},
-    {"gr": "ἡ στρατιά", "nl": "leger"},
-    {"gr": "πιστεύω (+ dat.)", "nl": "vertrouwen"},
-    {"gr": "τοιοῦτος, τοιαύτη, τοιοῦτο", "nl": "zodanig, dergelijk, zo’n (mnl., vrl., onz.)"},
-    {"gr": "φίλτατος", "nl": "liefst, dierbaarst (zeer/heel geliefd, zeer/heel dierbaar)"},
-    {"gr": "οὐδέν", "nl": "niets (helemaal niet)"},
-    {"gr": "ἤδη", "nl": "al, reeds"},
-    {"gr": "ἄθλιος", "nl": "ongelukkig"},
-    {"gr": "οὐκέτι", "nl": "niet meer"},
-    {"gr": "ἀντί (+ gen.)", "nl": "in plaats van"},
-    {"gr": "ἀρέσκω (+ dat.)", "nl": "bevallen aan, in de smaak vallen bij"},
-    {"gr": "βοηθέω (+ dat.)", "nl": "te hulp komen, helpen"},
-    {"gr": "εὔνους (+ dat.)", "nl": "goedgezind (aan)"},
+  { hst: "8", texts: [
+    { title: "Tekst 8A", words: [
+      {"gr": "πάρειμι", "nl": "aanwezig zijn"},
+      {"gr": "ὁ στρατηγός", "nl": "legeraanvoerder"},
+      {"gr": "ὁ ναύτης", "nl": "zeeman, matroos"},
+      {"gr": "ὁ στρατιώτης", "nl": "soldaat"},
+      {"gr": "οἱ ἄνδρες (ἀνδρῶν)", "nl": "mannen"},
+      {"gr": "πάντες (πάντων)", "nl": "alle(n)"},
+      {"gr": "ὁ νοῦς", "nl": "geest, verstand"},
+      {"gr": "ἐν νῷ ἔχω", "nl": "van plan zijn (lett. in de geest hebben)"},
+      {"gr": "παύω", "nl": "(doen/laten) stoppen, (doen/laten) ophouden"},
+      {"gr": "κωλύω (+ inf.)", "nl": "verhinderen, beletten (om)"},
+      {"gr": "ἅμα", "nl": "tegelijk, tegelijkertijd"},
+      {"gr": "τόδε, mv. τάδε", "nl": "dit (het volgende)"},
+      {"gr": "οὐδέ", "nl": "en niet, maar niet (ook niet, zelfs niet)"},
+      {"gr": "ἐχθρός (+ dat.)", "nl": "gehaat (bij), vijandig (aan)"},
+    ]},
+    { title: "Tekst 8B", words: [
+      {"gr": "ὁ πατήρ", "nl": "vader"},
+      {"gr": "ἡ τύχη", "nl": "lot"},
+      {"gr": "ὅμως", "nl": "toch"},
+      {"gr": "ὁ ἄγγελος", "nl": "bode"},
+      {"gr": "ἡ ἀλήθεια", "nl": "waarheid"},
+      {"gr": "ἄγγελλω", "nl": "berichten, melden"},
+      {"gr": "ἡ στρατιά", "nl": "leger"},
+      {"gr": "πιστεύω (+ dat.)", "nl": "vertrouwen"},
+      {"gr": "τοιοῦτος, τοιαύτη, τοιοῦτο", "nl": "zodanig, dergelijk, zo’n (mnl., vrl., onz.)"},
+      {"gr": "φίλτατος", "nl": "liefst, dierbaarst (zeer/heel geliefd, zeer/heel dierbaar)"},
+    ]},
+    { title: "Tekst 8C", words: [
+      {"gr": "οὐδέν", "nl": "niets (helemaal niet)"},
+      {"gr": "ἤδη", "nl": "al, reeds"},
+      {"gr": "ἄθλιος", "nl": "ongelukkig"},
+      {"gr": "οὐκέτι", "nl": "niet meer"},
+      {"gr": "ἀντί (+ gen.)", "nl": "in plaats van"},
+      {"gr": "ἀρέσκω (+ dat.)", "nl": "bevallen aan, in de smaak vallen bij"},
+      {"gr": "βοηθέω (+ dat.)", "nl": "te hulp komen, helpen"},
+      {"gr": "εὔνους (+ dat.)", "nl": "goedgezind (aan)"},
+    ]},
   ]},
-  { title: "Hoofdstuk 9", words: [
-    {"gr": "πᾶς (παντός),", "nl": "geheel (mnl., vrl., onz.)"},
-    {"gr": "πᾶσα (πάσης),", "nl": "ieder"},
-    {"gr": "πᾶν (παντός)", "nl": "mv. alle(n)"},
-    {"gr": "καθίζω", "nl": "(gaan) zitten"},
-    {"gr": "παλαιός", "nl": "oud, van vroeger"},
-    {"gr": "ὁ ἀνήρ (ἀνδρός)", "nl": "man"},
-    {"gr": "τὸ σῶμα (σώματος)", "nl": "lichaam"},
-    {"gr": "ἐγγύς (+ gen.)", "nl": "dichtbij"},
-    {"gr": "ὁ ἡγεμών (ἡγεμόνος)", "nl": "leider, aanvoerder"},
-    {"gr": "εὐδαίμων (εὐδαίμονος)", "nl": "gelukkig"},
-    {"gr": "ἄφρων (ἄφρονος)", "nl": "onverstandig, dwaas"},
-    {"gr": "τὰ κακά", "nl": "rampen, ongeluk, ellende"},
-    {"gr": "ἡμεῖς, ἡμῶν, ἡμῖν, ἡμᾶς", "nl": "wij (nom., gen., dat., acc. pers. vnw.)"},
-    {"gr": "μηκέτι", "nl": "niet meer (bij gebiedende wijs)"},
-    {"gr": "ἀποπέμπω", "nl": "terugsturen, wegsturen"},
-    {"gr": "ὁ/ἡ παῖς (παιδός)", "nl": "kind (jongen, meisje, slaaf)"},
-    {"gr": "ἡ ἔρις (ἔριδος)", "nl": "strijd, ruzie, twist"},
-    {"gr": "οἷός τέ εἰμι (+ inf.)", "nl": "in staat zijn om, kunnen"},
-    {"gr": "σώφρων (σώφρονος)", "nl": "verstandig"},
-    {"gr": "ἕτοιμος (+ inf.)", "nl": "bereid, gereed, klaar (om te)"},
-    {"gr": "ἄριστος", "nl": "beste (zeer/heel goed)"},
-    {"gr": "ὁ σωτήρ (σωτῆρος)", "nl": "redder"},
-    {"gr": "ἡ γυνή (γυναικός)", "nl": "vrouw"},
-    {"gr": "ὁ λέων (λέοντος)", "nl": "leeuw"},
-    {"gr": "χαίρε, χαίρετε", "nl": "gegroet"},
-    {"gr": "δεῦρο", "nl": "hier(heen)"},
-    {"gr": "κομίζω", "nl": "brengen, halen"},
-    {"gr": "ὁ σῖτος", "nl": "eten, voedsel"},
-    {"gr": "τὸ δεῖπνον", "nl": "maaltijd"},
-    {"gr": "μέλει μοι", "nl": "(het) interesseert me"},
-    {"gr": "τὸ πῦρ (πυρός)", "nl": "vuur"},
-    {"gr": "ἄξιος (+ gen.)", "nl": "waard, waardig"},
-    {"gr": "ὑμεῖς, ὑμῶν, ὑμῖν, ὑμᾶς", "nl": "jullie, u (nom., gen., dat., acc. pers. vnw.)"},
-    {"gr": "πείθω", "nl": "overtuigen, overreden"},
-    {"gr": "ἐμοῦ, μου", "nl": "(van) mij, mijn (genitivus pers. vnw.)"},
-    {"gr": "ὑμέτερος", "nl": "(van) jullie/u (bezittelijk voornaamwoord)"},
-    {"gr": "ἡμέτερος", "nl": "ons, onze (bezittelijk voornaamwoord)"},
-    {"gr": "ἡ μήτηρ (μητρός)", "nl": "moeder"},
-    {"gr": "οἴκαδε", "nl": "naar huis"},
-    {"gr": "σοί, σοι", "nl": "(aan/voor) jou/je, u (dativus pers. vnw.)"},
-    {"gr": "ἀμφί + acc.", "nl": "rondom"},
-    {"gr": "πολεμέω", "nl": "oorlog voeren"},
-    {"gr": "ἡ δόξα", "nl": "mening (roem)"},
-    {"gr": "ἀποβαίνω", "nl": "weggaan"},
+  { hst: "9", texts: [
+    { title: "Tekst 9A", words: [
+      {"gr": "πᾶς (παντός),", "nl": "geheel (mnl., vrl., onz.)"},
+      {"gr": "πᾶσα (πάσης),", "nl": "ieder"},
+      {"gr": "πᾶν (παντός)", "nl": "mv. alle(n)"},
+      {"gr": "καθίζω", "nl": "(gaan) zitten"},
+      {"gr": "παλαιός", "nl": "oud, van vroeger"},
+      {"gr": "ὁ ἀνήρ (ἀνδρός)", "nl": "man"},
+      {"gr": "τὸ σῶμα (σώματος)", "nl": "lichaam"},
+      {"gr": "ἐγγύς (+ gen.)", "nl": "dichtbij"},
+      {"gr": "ὁ ἡγεμών (ἡγεμόνος)", "nl": "leider, aanvoerder"},
+      {"gr": "εὐδαίμων (εὐδαίμονος)", "nl": "gelukkig"},
+      {"gr": "ἄφρων (ἄφρονος)", "nl": "onverstandig, dwaas"},
+      {"gr": "τὰ κακά", "nl": "rampen, ongeluk, ellende"},
+      {"gr": "ἡμεῖς, ἡμῶν, ἡμῖν, ἡμᾶς", "nl": "wij (nom., gen., dat., acc. pers. vnw.)"},
+      {"gr": "μηκέτι", "nl": "niet meer (bij gebiedende wijs)"},
+      {"gr": "ἀποπέμπω", "nl": "terugsturen, wegsturen"},
+      {"gr": "ὁ/ἡ παῖς (παιδός)", "nl": "kind (jongen, meisje, slaaf)"},
+      {"gr": "ἡ ἔρις (ἔριδος)", "nl": "strijd, ruzie, twist"},
+      {"gr": "οἷός τέ εἰμι (+ inf.)", "nl": "in staat zijn om, kunnen"},
+      {"gr": "σώφρων (σώφρονος)", "nl": "verstandig"},
+      {"gr": "ἕτοιμος (+ inf.)", "nl": "bereid, gereed, klaar (om te)"},
+      {"gr": "ἄριστος", "nl": "beste (zeer/heel goed)"},
+      {"gr": "ὁ σωτήρ (σωτῆρος)", "nl": "redder"},
+      {"gr": "ἡ γυνή (γυναικός)", "nl": "vrouw"},
+      {"gr": "ὁ λέων (λέοντος)", "nl": "leeuw"},
+    ]},
+    { title: "Tekst 9B", words: [
+      {"gr": "χαίρε, χαίρετε", "nl": "gegroet"},
+      {"gr": "δεῦρο", "nl": "hier(heen)"},
+      {"gr": "κομίζω", "nl": "brengen, halen"},
+      {"gr": "ὁ σῖτος", "nl": "eten, voedsel"},
+      {"gr": "τὸ δεῖπνον", "nl": "maaltijd"},
+      {"gr": "μέλει μοι", "nl": "(het) interesseert me"},
+      {"gr": "τὸ πῦρ (πυρός)", "nl": "vuur"},
+      {"gr": "ἄξιος (+ gen.)", "nl": "waard, waardig"},
+      {"gr": "ὑμεῖς, ὑμῶν, ὑμῖν, ὑμᾶς", "nl": "jullie, u (nom., gen., dat., acc. pers. vnw.)"},
+      {"gr": "πείθω", "nl": "overtuigen, overreden"},
+      {"gr": "ἐμοῦ, μου", "nl": "(van) mij, mijn (genitivus pers. vnw.)"},
+      {"gr": "ὑμέτερος", "nl": "(van) jullie/u (bezittelijk voornaamwoord)"},
+      {"gr": "ἡμέτερος", "nl": "ons, onze (bezittelijk voornaamwoord)"},
+      {"gr": "ἡ μήτηρ (μητρός)", "nl": "moeder"},
+      {"gr": "οἴκαδε", "nl": "naar huis"},
+      {"gr": "σοί, σοι", "nl": "(aan/voor) jou/je, u (dativus pers. vnw.)"},
+      {"gr": "ἀμφί + acc.", "nl": "rondom"},
+      {"gr": "πολεμέω", "nl": "oorlog voeren"},
+      {"gr": "ἡ δόξα", "nl": "mening (roem)"},
+      {"gr": "ἀποβαίνω", "nl": "weggaan"},
+    ]},
   ]},
-  { title: "Hoofdstuk 10", words: [
-    {"gr": "ἀλλά (bij gebiedende wijs)", "nl": "maar (kom)"},
-    {"gr": "τίκτω", "nl": "baren, ter wereld brengen"},
-    {"gr": "ἴσως", "nl": "misschien, waarschijnlijk"},
-    {"gr": "ἐλπίζω (+ inf.)", "nl": "hopen, verwachten (te)"},
-    {"gr": "ὀλίγος", "nl": "weinig, gering"},
-    {"gr": "μέγα", "nl": "erg, zeer (bijwoord)"},
-    {"gr": "ἡ τελευτή", "nl": "einde"},
-    {"gr": "πρότερος", "nl": "eerder, vroeger"},
-    {"gr": "πρότερον", "nl": "eerder (bijwoord)"},
-    {"gr": "ἄρχω (+ gen.)", "nl": "voorgaan, leiden (heersen over)"},
-    {"gr": "ἐλαύνω", "nl": "(voort)drijven (optrekken, marcheren)"},
-    {"gr": "εὖ", "nl": "goed (bijwoord)"},
-    {"gr": "πιστός", "nl": "trouw, betrouwbaar"},
-    {"gr": "χωρέω", "nl": "gaan"},
-    {"gr": "λαμπρός", "nl": "schitterend"},
-    {"gr": "ἡ πόλις (acc. πόλιν)", "nl": "stad"},
-    {"gr": "τὸ δάκρυον", "nl": "traan"},
-    {"gr": "θερμός", "nl": "warm"},
-    {"gr": "καλύπτω", "nl": "bedekken"},
-    {"gr": "ἀμφότεροι", "nl": "beide(n)"},
-    {"gr": "ἡ χείρ (χειρός, dat. mv. χερσί)", "nl": "hand, arm"},
-    {"gr": "κατά (+ gen.)", "nl": "vanaf...naar beneden"},
-    {"gr": "τὸ πρόσωπον", "nl": "gezicht"},
-    {"gr": "ἡ δούλη", "nl": "slavin"},
-    {"gr": "κλα(ί)ω", "nl": "huilen, wenen (om)"},
-    {"gr": "μανθάνω", "nl": "leren kennen, begrijpen, vernemen"},
-    {"gr": "ἄδικος", "nl": "onrechtvaardig"},
+  { hst: "10", texts: [
+    { title: "Tekst 10A", words: [
+      {"gr": "ἀλλά (bij gebiedende wijs)", "nl": "maar (kom)"},
+      {"gr": "τίκτω", "nl": "baren, ter wereld brengen"},
+      {"gr": "ἴσως", "nl": "misschien, waarschijnlijk"},
+      {"gr": "ἐλπίζω (+ inf.)", "nl": "hopen, verwachten (te)"},
+      {"gr": "ὀλίγος", "nl": "weinig, gering"},
+      {"gr": "μέγα", "nl": "erg, zeer (bijwoord)"},
+    ]},
+    { title: "Tekst 10B", words: [
+      {"gr": "ἡ τελευτή", "nl": "einde"},
+      {"gr": "πρότερος", "nl": "eerder, vroeger"},
+      {"gr": "πρότερον", "nl": "eerder (bijwoord)"},
+      {"gr": "ἄρχω (+ gen.)", "nl": "voorgaan, leiden (heersen over)"},
+      {"gr": "ἐλαύνω", "nl": "(voort)drijven (optrekken, marcheren)"},
+      {"gr": "εὖ", "nl": "goed (bijwoord)"},
+      {"gr": "πιστός", "nl": "trouw, betrouwbaar"},
+      {"gr": "χωρέω", "nl": "gaan"},
+      {"gr": "λαμπρός", "nl": "schitterend"},
+      {"gr": "ἡ πόλις (acc. πόλιν)", "nl": "stad"},
+    ]},
+    { title: "Tekst 10C", words: [
+      {"gr": "τὸ δάκρυον", "nl": "traan"},
+      {"gr": "θερμός", "nl": "warm"},
+      {"gr": "καλύπτω", "nl": "bedekken"},
+      {"gr": "ἀμφότεροι", "nl": "beide(n)"},
+      {"gr": "ἡ χείρ (χειρός, dat. mv. χερσί)", "nl": "hand, arm"},
+      {"gr": "κατά (+ gen.)", "nl": "vanaf...naar beneden"},
+      {"gr": "τὸ πρόσωπον", "nl": "gezicht"},
+      {"gr": "ἡ δούλη", "nl": "slavin"},
+      {"gr": "κλα(ί)ω", "nl": "huilen, wenen (om)"},
+      {"gr": "μανθάνω", "nl": "leren kennen, begrijpen, vernemen"},
+      {"gr": "ἄδικος", "nl": "onrechtvaardig"},
+    ]},
   ]},
-  { title: "Hoofdstuk 11", words: [
-    {"gr": "εἶδον (inf. ἰδεῖν)", "nl": "ik zag (aor. bij ὁράω zien)"},
-    {"gr": "ἡ ψυχή", "nl": "ziel, geest, schim (leven)"},
-    {"gr": "εἶπον (inf. εἰπεῖν)", "nl": "ik zei, ik sprak (aor. bij λέγω zeggen)"},
-    {"gr": "τάχα", "nl": "snel, spoedig (bijwoord)"},
-    {"gr": "θάπτω", "nl": "begraven"},
-    {"gr": "ἦλθον (inf. ἐλθεῖν)", "nl": "ik kwam, ik ging (aor.)"},
-    {"gr": "τι (zonder accent!) (τινος)", "nl": "iets (zelfstandig gebruikt of enige bijvoeglijk gebruikt)"},
-    {"gr": "ἀπέθανον (inf. ἀποθανεῖν)", "nl": "ik stierf (aor. van ἀποθνῄσκω)"},
-    {"gr": "σοῦ, σου", "nl": "(van) jou/u, jouw/uw (genitivus pers. vnw.)"},
-    {"gr": "τρέφω, aor. ἔθρεψα", "nl": "voeden (opvoeden)"},
-    {"gr": "σύνειμι (+ dat.)", "nl": "samenzijn (met), omgaan met"},
-    {"gr": "ἔλαβον (inf. λαβεῖν)", "nl": "ik pakte, ik nam (aor. van λαμβάνω)"},
-    {"gr": "ταῦτα", "nl": "dit, dat (onz. meervoud nom. + acc.)"},
-    {"gr": "ἡ χθών (χθονός)", "nl": "aarde, grond"},
-    {"gr": "καταβαίνω", "nl": "naar beneden gaan, afdalen"},
-    {"gr": "τις (zonder accent!) (τινος)", "nl": "iemand, iets (zelfstandig gebruikt / een of andere bijvoeglijk gebruikt / enkelen sommige(n) (meervoud)"},
-    {"gr": "λυπέω", "nl": "kwellen, verdriet doen"},
-    {"gr": "πρῶτος", "nl": "eerste"},
-    {"gr": "τρέχω", "nl": "rennen"},
-    {"gr": "ἤνεγκον (inf. ἐνεγκεῖν)", "nl": "ik droeg, ik bracht (aor. bij φέρω)"},
-    {"gr": "ἄρχω + gen.", "nl": "voorgaan, leiden (heersen over / beginnen met)"},
-    {"gr": "ἔλιπον (inf. λιπεῖν)", "nl": "ik liet, ik verliet (aor. van λείπω)"},
-    {"gr": "καταλείπω, aor. κατέλιπον", "nl": "achterlaten"},
-    {"gr": "ἔτεκον (inf. τεκεῖν)", "nl": "ik baarde, ik bracht ter wereld (aor. van τίκτω)"},
-    {"gr": "τὸ ὄνομα (ὀνόματος)", "nl": "naam"},
-    {"gr": "ὁ φύλαξ (φύλακος)", "nl": "wachter, bewaker"},
-    {"gr": "ἤγαγον (inf. ἀγαγεῖν)", "nl": "ik bracht, ik leidde (aor. van ἄγω)"},
-    {"gr": "ἤ", "nl": "of"},
-    {"gr": "ὁ ἀδελφός", "nl": "broer"},
-    {"gr": "διαφθείρω", "nl": "te gronde richten, vernietigen"},
-    {"gr": "ἔπεσον (inf. πεσεῖν)", "nl": "ik viel (aor. bij πίπτω)"},
+  { hst: "11", texts: [
+    { title: "Tekst 11A", words: [
+      {"gr": "εἶδον (inf. ἰδεῖν)", "nl": "ik zag (aor. bij ὁράω zien)"},
+      {"gr": "ἡ ψυχή", "nl": "ziel, geest, schim (leven)"},
+      {"gr": "εἶπον (inf. εἰπεῖν)", "nl": "ik zei, ik sprak (aor. bij λέγω zeggen)"},
+      {"gr": "τάχα", "nl": "snel, spoedig (bijwoord)"},
+      {"gr": "θάπτω", "nl": "begraven"},
+      {"gr": "ἦλθον (inf. ἐλθεῖν)", "nl": "ik kwam, ik ging (aor.)"},
+      {"gr": "τι (zonder accent!) (τινος)", "nl": "iets (zelfstandig gebruikt of enige bijvoeglijk gebruikt)"},
+      {"gr": "ἀπέθανον (inf. ἀποθανεῖν)", "nl": "ik stierf (aor. van ἀποθνῄσκω)"},
+      {"gr": "σοῦ, σου", "nl": "(van) jou/u, jouw/uw (genitivus pers. vnw.)"},
+      {"gr": "τρέφω, aor. ἔθρεψα", "nl": "voeden (opvoeden)"},
+      {"gr": "σύνειμι (+ dat.)", "nl": "samenzijn (met), omgaan met"},
+      {"gr": "ἔλαβον (inf. λαβεῖν)", "nl": "ik pakte, ik nam (aor. van λαμβάνω)"},
+      {"gr": "ταῦτα", "nl": "dit, dat (onz. meervoud nom. + acc.)"},
+      {"gr": "ἡ χθών (χθονός)", "nl": "aarde, grond"},
+      {"gr": "καταβαίνω", "nl": "naar beneden gaan, afdalen"},
+    ]},
+    { title: "Tekst 11B", words: [
+      {"gr": "τις (zonder accent!) (τινος)", "nl": "iemand, iets (zelfstandig gebruikt / een of andere bijvoeglijk gebruikt / enkelen sommige(n) (meervoud)"},
+      {"gr": "λυπέω", "nl": "kwellen, verdriet doen"},
+      {"gr": "πρῶτος", "nl": "eerste"},
+      {"gr": "τρέχω", "nl": "rennen"},
+      {"gr": "ἤνεγκον (inf. ἐνεγκεῖν)", "nl": "ik droeg, ik bracht (aor. bij φέρω)"},
+      {"gr": "ἄρχω + gen.", "nl": "voorgaan, leiden (heersen over / beginnen met)"},
+      {"gr": "ἔλιπον (inf. λιπεῖν)", "nl": "ik liet, ik verliet (aor. van λείπω)"},
+      {"gr": "καταλείπω, aor. κατέλιπον", "nl": "achterlaten"},
+      {"gr": "ἔτεκον (inf. τεκεῖν)", "nl": "ik baarde, ik bracht ter wereld (aor. van τίκτω)"},
+      {"gr": "τὸ ὄνομα (ὀνόματος)", "nl": "naam"},
+      {"gr": "ὁ φύλαξ (φύλακος)", "nl": "wachter, bewaker"},
+      {"gr": "ἤγαγον (inf. ἀγαγεῖν)", "nl": "ik bracht, ik leidde (aor. van ἄγω)"},
+      {"gr": "ἤ", "nl": "of"},
+      {"gr": "ὁ ἀδελφός", "nl": "broer"},
+      {"gr": "διαφθείρω", "nl": "te gronde richten, vernietigen"},
+      {"gr": "ἔπεσον (inf. πεσεῖν)", "nl": "ik viel (aor. bij πίπτω)"},
+    ]},
   ]},
-  { title: "Hoofdstuk 12", words: [
-    {"gr": "ἡ τιμή", "nl": "eer, eerbewijs"},
-    {"gr": "σοφός", "nl": "verstandig, wijs (slim)"},
-    {"gr": "μέγιστος", "nl": "grootst (zeer groot)"},
-    {"gr": "μάλιστα", "nl": "het meest, vooral (bijwoord)"},
-    {"gr": "διαφέρω", "nl": "verschillen"},
-    {"gr": "κρείττων (κρείττονος)", "nl": "beter, sterker"},
-    {"gr": "βελτίων (βελτίονος)", "nl": "beter, bekwamer"},
-    {"gr": "ὁ πολέμιος", "nl": "vijand"},
-    {"gr": "φυλάττω", "nl": "bewaken"},
-    {"gr": "ἔφυγον (inf. φυγεῖν) (+ acc.)", "nl": "ik vluchtte (voor) (aor. van φεύγω)"},
-    {"gr": "δειλός", "nl": "laf (ongelukkig)"},
-    {"gr": "κακίων (κακίονος)", "nl": "slechter"},
-    {"gr": "ἀμείνων (ἀμείνονος)", "nl": "beter"},
-    {"gr": "ἤ", "nl": "of (dan, na comparativus)"},
-    {"gr": "σκοπέω", "nl": "bekijken, letten op"},
-    {"gr": "κράτιστος", "nl": "sterkst, best (zeer sterk, zeer goed)"},
-    {"gr": "μείζων (μείζονος)", "nl": "groter"},
-    {"gr": "διὰ τοῦτο", "nl": "daarom (lett.: door dát)"},
-    {"gr": "βέλτιστος", "nl": "best (zeer goed)"},
-    {"gr": "ὁ Ζεύς, Διός", "nl": "Zeus"},
-    {"gr": "ὡς", "nl": "(zo)als"},
-    {"gr": "ἆρα", "nl": "geeft aan dat er een vraagzin volgt"},
-    {"gr": "ἡ σοφία", "nl": "wijsheid (slimheid)"},
-    {"gr": "ὁ δόλος", "nl": "list"},
-    {"gr": "μᾶλλον", "nl": "meer (bijwoord)"},
-    {"gr": "ἡ νύξ (νυκτός)", "nl": "nacht"},
-    {"gr": "γιγνώσκω", "nl": "(leren) kennen (inzien, begrijpen)"},
-    {"gr": "ἡ βουλή", "nl": "plan, besluit (raad, advies)"},
-    {"gr": "πότερος;", "nl": "wie van beide(n)?"},
-    {"gr": "κρίνω", "nl": "oordelen, beoordelen"},
-    {"gr": "πλέον", "nl": "meer (bijwoord)"},
-    {"gr": "βλάπτω", "nl": "schade toebrengen, benadelen"},
-    {"gr": "πλεῖστος", "nl": "meeste (zeer vele)"},
-    {"gr": "ἀδικέω", "nl": "onrecht doen (onrechtvaardig behandelen)"},
-    {"gr": "ἔσχον (inf. σχεῖν)", "nl": "ik had, ik kreeg (aor. van ἔχω)"},
-    {"gr": "ἥττων (ἥττονος)", "nl": "minder, zwakker"},
-    {"gr": "σεαυτόν, σεαυτήν", "nl": "jezelf (accusativus manl., vrl. enk.)"},
-    {"gr": "πλείων (onz. πλέον) (πλείονος)", "nl": "meer"},
-    {"gr": "ἡ γῆ", "nl": "aarde (grond, land)"},
-    {"gr": "τάχιστος", "nl": "snelst (zeer/heel snel)"},
-    {"gr": "ὡς τάχιστα", "nl": "zo snel mogelijk (bijwoord)"},
+  { hst: "12", texts: [
+    { title: "Tekst 12A", words: [
+      {"gr": "ἡ τιμή", "nl": "eer, eerbewijs"},
+      {"gr": "σοφός", "nl": "verstandig, wijs (slim)"},
+      {"gr": "μέγιστος", "nl": "grootst (zeer groot)"},
+      {"gr": "μάλιστα", "nl": "het meest, vooral (bijwoord)"},
+      {"gr": "διαφέρω", "nl": "verschillen"},
+      {"gr": "κρείττων (κρείττονος)", "nl": "beter, sterker"},
+      {"gr": "βελτίων (βελτίονος)", "nl": "beter, bekwamer"},
+      {"gr": "ὁ πολέμιος", "nl": "vijand"},
+      {"gr": "φυλάττω", "nl": "bewaken"},
+      {"gr": "ἔφυγον (inf. φυγεῖν) (+ acc.)", "nl": "ik vluchtte (voor) (aor. van φεύγω)"},
+      {"gr": "δειλός", "nl": "laf (ongelukkig)"},
+      {"gr": "κακίων (κακίονος)", "nl": "slechter"},
+      {"gr": "ἀμείνων (ἀμείνονος)", "nl": "beter"},
+      {"gr": "ἤ", "nl": "of (dan, na comparativus)"},
+      {"gr": "σκοπέω", "nl": "bekijken, letten op"},
+    ]},
+    { title: "Tekst 12B", words: [
+      {"gr": "κράτιστος", "nl": "sterkst, best (zeer sterk, zeer goed)"},
+      {"gr": "μείζων (μείζονος)", "nl": "groter"},
+      {"gr": "διὰ τοῦτο", "nl": "daarom (lett.: door dát)"},
+      {"gr": "βέλτιστος", "nl": "best (zeer goed)"},
+      {"gr": "ὁ Ζεύς, Διός", "nl": "Zeus"},
+      {"gr": "ὡς", "nl": "(zo)als"},
+      {"gr": "ἆρα", "nl": "geeft aan dat er een vraagzin volgt"},
+      {"gr": "ἡ σοφία", "nl": "wijsheid (slimheid)"},
+      {"gr": "ὁ δόλος", "nl": "list"},
+      {"gr": "μᾶλλον", "nl": "meer (bijwoord)"},
+      {"gr": "ἡ νύξ (νυκτός)", "nl": "nacht"},
+      {"gr": "γιγνώσκω", "nl": "(leren) kennen (inzien, begrijpen)"},
+      {"gr": "ἡ βουλή", "nl": "plan, besluit (raad, advies)"},
+      {"gr": "πότερος;", "nl": "wie van beide(n)?"},
+      {"gr": "κρίνω", "nl": "oordelen, beoordelen"},
+      {"gr": "πλέον", "nl": "meer (bijwoord)"},
+      {"gr": "βλάπτω", "nl": "schade toebrengen, benadelen"},
+      {"gr": "πλεῖστος", "nl": "meeste (zeer vele)"},
+      {"gr": "ἀδικέω", "nl": "onrecht doen (onrechtvaardig behandelen)"},
+    ]},
+    { title: "Tekst 12C", words: [
+      {"gr": "ἔσχον (inf. σχεῖν)", "nl": "ik had, ik kreeg (aor. van ἔχω)"},
+      {"gr": "ἥττων (ἥττονος)", "nl": "minder, zwakker"},
+      {"gr": "σεαυτόν, σεαυτήν", "nl": "jezelf (accusativus manl., vrl. enk.)"},
+      {"gr": "πλείων (onz. πλέον) (πλείονος)", "nl": "meer"},
+      {"gr": "ἡ γῆ", "nl": "aarde (grond, land)"},
+      {"gr": "τάχιστος", "nl": "snelst (zeer/heel snel)"},
+      {"gr": "ὡς τάχιστα", "nl": "zo snel mogelijk (bijwoord)"},
+    ]},
   ]},
-  { title: "Hoofdstuk 13", words: [
-    {"gr": "ὁ πολίτης", "nl": "burger"},
-    {"gr": "τρέχω", "nl": "rennen"},
-    {"gr": "φρονέω", "nl": "verstandig zijn"},
-    {"gr": "ἄπιστος", "nl": "ongelofelijk (onbetrouwbaar)"},
-    {"gr": "χρή (+ inf./A.c.I.)", "nl": "het is nodig om/dat, het moet"},
-    {"gr": "δῆλος", "nl": "duidelijk"},
-    {"gr": "δῆλόν ἐστι(ν) (+ A.c.I.)", "nl": "het is duidelijk (dat)"},
-    {"gr": "ἐκεῖνος, ἐκείνη, ἐκεῖνο", "nl": "die, dat (hij, zij, het, daar)"},
-    {"gr": "οὗτος, αὕτη, τοῦτο", "nl": "deze/dit (die / dat / hij, zij, het)"},
-    {"gr": "πρὸς τούτοις", "nl": "bovendien (lett. bij die dingen)"},
-    {"gr": "βάλλω, aor. ἔβαλον", "nl": "gooien, werpen"},
-    {"gr": "τὸ αὐτό", "nl": "hetzelfde"},
-    {"gr": "ἀλλήλους", "nl": "elkaar (accusativus)"},
-    {"gr": "τὸ σημεῖον", "nl": "teken"},
-    {"gr": "ὅδε, ἥδε, τόδε", "nl": "deze, dit (mnl., vrl., onz.)"},
-    {"gr": "ἀναγκαῖος", "nl": "noodzakelijk, onvermijdelijk"},
-    {"gr": "ἀναγκαῖόν ἐστι(ν) (+ A.c.I.)", "nl": "het is noodzakelijk/onvermijdelijk (dat)"},
-    {"gr": "ὅτε", "nl": "toen, wanneer (voegwoord)"},
-    {"gr": "λανθάνω + acc.", "nl": "verborgen zijn voor, ontgaan aan"},
-    {"gr": "διώκω", "nl": "achtervolgen"},
-    {"gr": "τὸ γόνυ (γόνατος)", "nl": "knie"},
-    {"gr": "ὁ αὐτὸς καί", "nl": "dezelfde als"},
-    {"gr": "πότερον...ἤ", "nl": "(of)...of (in een vraagzin)"},
-    {"gr": "δοκέω, aor. ἔδοξα + dat.", "nl": "(toe)schijnen (aan)"},
-    {"gr": "κάλλιστος", "nl": "mooist, zeer/heel mooi"},
-    {"gr": "ἔτι", "nl": "nog"},
+  { hst: "13", texts: [
+    { title: "Tekst 13A", words: [
+      {"gr": "ὁ πολίτης", "nl": "burger"},
+      {"gr": "τρέχω", "nl": "rennen"},
+      {"gr": "φρονέω", "nl": "verstandig zijn"},
+      {"gr": "ἄπιστος", "nl": "ongelofelijk (onbetrouwbaar)"},
+      {"gr": "χρή (+ inf./A.c.I.)", "nl": "het is nodig om/dat, het moet"},
+      {"gr": "δῆλος", "nl": "duidelijk"},
+      {"gr": "δῆλόν ἐστι(ν) (+ A.c.I.)", "nl": "het is duidelijk (dat)"},
+      {"gr": "ἐκεῖνος, ἐκείνη, ἐκεῖνο", "nl": "die, dat (hij, zij, het, daar)"},
+      {"gr": "οὗτος, αὕτη, τοῦτο", "nl": "deze/dit (die / dat / hij, zij, het)"},
+      {"gr": "πρὸς τούτοις", "nl": "bovendien (lett. bij die dingen)"},
+      {"gr": "βάλλω, aor. ἔβαλον", "nl": "gooien, werpen"},
+      {"gr": "τὸ αὐτό", "nl": "hetzelfde"},
+      {"gr": "ἀλλήλους", "nl": "elkaar (accusativus)"},
+      {"gr": "τὸ σημεῖον", "nl": "teken"},
+      {"gr": "ὅδε, ἥδε, τόδε", "nl": "deze, dit (mnl., vrl., onz.)"},
+      {"gr": "ἀναγκαῖος", "nl": "noodzakelijk, onvermijdelijk"},
+      {"gr": "ἀναγκαῖόν ἐστι(ν) (+ A.c.I.)", "nl": "het is noodzakelijk/onvermijdelijk (dat)"},
+    ]},
+    { title: "Tekst 13B", words: [
+      {"gr": "ὅτε", "nl": "toen, wanneer (voegwoord)"},
+      {"gr": "λανθάνω + acc.", "nl": "verborgen zijn voor, ontgaan aan"},
+      {"gr": "διώκω", "nl": "achtervolgen"},
+      {"gr": "τὸ γόνυ (γόνατος)", "nl": "knie"},
+      {"gr": "ὁ αὐτὸς καί", "nl": "dezelfde als"},
+      {"gr": "πότερον...ἤ", "nl": "(of)...of (in een vraagzin)"},
+      {"gr": "δοκέω, aor. ἔδοξα + dat.", "nl": "(toe)schijnen (aan)"},
+      {"gr": "κάλλιστος", "nl": "mooist, zeer/heel mooi"},
+      {"gr": "ἔτι", "nl": "nog"},
+    ]},
   ]},
 ];
+
 
 // Build a lowercase-Greek-char -> Latin-letter map from EL_ALFABET, then strip
 // accents/breathing marks (Unicode combining marks) before mapping each
@@ -5409,7 +5534,7 @@ function initNestedVocab(wrapId, chapters, lemmaFn, langCode){
 }
 
 /* ================= CONTENT: GREEK ALFABET ================= */
-/* ================= GREEK: NAAMVALLEN & WERKWOORDEN (Pallas) ================= */
+/* ================= GREEK: NAAMVALLEN & WERKWOORDEN PER HOOFDSTUK (Pallas) ================= */
 const EL_CASE_LABEL = {nom:'nominativus', gen:'genitivus', dat:'dativus', acc:'accusativus'};
 
 function elArtForms(gender){
@@ -5418,7 +5543,6 @@ function elArtForms(gender){
   const N={nomSg:'τό',genSg:'τοῦ',datSg:'τῷ',accSg:'τό', nomPl:'τά',genPl:'τῶν',datPl:'τοῖς',accPl:'τά'};
   return gender==='m'?M:gender==='f'?F:N;
 }
-
 const EL_DECL_WORDS = [
   { gr:'μάχη', nl:'strijd', g:'f', group:'α/η-groep', forms:{nomSg:'μάχη',genSg:'μάχης',datSg:'μάχῃ',accSg:'μάχην',nomPl:'μάχαι',genPl:'μαχῶν',datPl:'μάχαις',accPl:'μάχας'} },
   { gr:'χώρα', nl:'streek', g:'f', group:'α/η-groep', forms:{nomSg:'χώρα',genSg:'χώρας',datSg:'χώρᾳ',accSg:'χώραν',nomPl:'χῶραι',genPl:'χωρῶν',datPl:'χώραις',accPl:'χώρας'} },
@@ -5428,84 +5552,76 @@ const EL_DECL_WORDS = [
   { gr:'θηρίον', nl:'wild dier, beest', g:'n', group:'o-groep', forms:{nomSg:'θηρίον',genSg:'θηρίου',datSg:'θηρίῳ',accSg:'θηρίον',nomPl:'θηρία',genPl:'θηρίων',datPl:'θηρίοις',accPl:'θηρία'} }
 ];
 
-function elNounLeren(){
+/* ---- Hoofdstuk 3 ---- */
+function elC3_Naamvallen(){
   return `
-  <h2>Naamvallen en hun functie</h2>
-  <p>Het Grieks kent <strong>vijf naamvallen</strong>: nominativus (1e), genitivus (2e), dativus (3e), accusativus (4e) en vocativus (die meestal gelijk is aan de nominativus). Aan de uitgang van een woord zie je welke functie het in de zin heeft.</p>
+  <h3>Zelfstandige naamwoorden: uitgang en functie</h3>
+  <p>In het Grieks kunnen zelfstandige naamwoorden verschillende uitgangen hebben. Als onderwerp heeft een woord een andere uitgang dan als lijdend voorwerp.</p>
+  <h3>Naamvallen en hun functie</h3>
+  <p>Het Grieks kent <strong>vijf naamvallen</strong>: nominativus (1e), genitivus (2e), dativus (3e), accusativus (4e) en vocativus (die meestal gelijk is aan de nominativus). Aan de naamval (dus de uitgang) zie je de functie van het woord in de zin.</p>
   <table><thead><tr><th>Naamval</th><th>Functie</th></tr></thead><tbody>
-  <tr><td>Nominativus</td><td>onderwerp — én naamwoordelijk deel van het gezegde bij een vorm van "zijn" (bijv. <em>Ἡρακλῆς δοῦλός ἐστιν</em> — Herakles is slaaf)</td></tr>
-  <tr><td>Accusativus</td><td>lijdend voorwerp</td></tr>
+  <tr><td>Nominativus</td><td>1. onderwerp (subject) — 2. naamwoordelijk deel van het gezegde bij een vorm van "zijn": <em>Ἡρακλῆς δοῦλός ἐστιν</em> — Herakles is slaaf</td></tr>
+  <tr><td>Accusativus</td><td>lijdend voorwerp (object)</td></tr>
   </tbody></table>
-  <div class="note">Bij het naamwoordelijk deel van het gezegde ontbreekt vaak het lidwoord: <em>θεοὶ οὐκ εἰσὶν ἄνθρωποι</em> — goden zijn geen mensen.</div>
-
-  <h2>Het lidwoord</h2>
-  <p>Het Grieks heeft alleen een <strong>bepaald</strong> lidwoord (een onbepaald lidwoord zoals "een" bestaat niet — een naamwoord zonder lidwoord vertaal je vaak juist mét "een"). Elk zelfstandig naamwoord heeft een vast geslacht: mannelijk (ὁ), vrouwelijk (ἡ) of onzijdig (τό). Het lidwoord staat in dezelfde naamval als het bijbehorende naamwoord.</p>
-  ${tableHTML(['mannelijk','vrouwelijk'],[
-    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
-  ], (r,c)=>{
-    const keys=['nomSg','genSg','datSg','accSg'];
-    const forms = c===0 ? elArtForms('m') : elArtForms('f');
-    return forms[keys[r]];
+  <div class="note">Elke naamval kan meerdere functies hebben — het lidwoord ontbreekt vaak bij het naamwoordelijk deel van het gezegde: <em>θεοὶ οὐκ εἰσὶν ἄνθρωποι</em> — goden zijn geen mensen.</div>
+  `;
+}
+function elC3_Lidwoord(){
+  return `
+  <h3>Het lidwoord</h3>
+  <p>Er zijn in het Grieks mannelijke, vrouwelijke en onzijdige zelfstandige naamwoorden. Aan het lidwoord zie je het geslacht: mannelijk ὁ, vrouwelijk ἡ, onzijdig τό. Het lidwoord staat in dezelfde naamval als het zelfstandig naamwoord waar het bij hoort.</p>
+  ${tableHTML(['mannelijk','vrouwelijk'],[{label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}], (r,c)=>{
+    const keys=['nomSg','genSg','datSg','accSg']; const forms = c===0?elArtForms('m'):elArtForms('f'); return forms[keys[r]];
   }, 'Enkelvoud')}
-  ${tableHTML(['mannelijk','vrouwelijk'],[
-    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
-  ], (r,c)=>{
-    const keys=['nomPl','genPl','datPl','accPl'];
-    const forms = c===0 ? elArtForms('m') : elArtForms('f');
-    return forms[keys[r]];
+  ${tableHTML(['mannelijk','vrouwelijk'],[{label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}], (r,c)=>{
+    const keys=['nomPl','genPl','datPl','accPl']; const forms = c===0?elArtForms('m'):elArtForms('f'); return forms[keys[r]];
   }, 'Meervoud')}
-  ${tableHTML(['onzijdig ev.','onzijdig mv.'],[
-    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
-  ], (r,c)=>{
-    const n = elArtForms('n');
-    if(c===0) return n[['nomSg','genSg','datSg','accSg'][r]];
-    return n[['nomPl','genPl','datPl','accPl'][r]];
+  ${tableHTML(['onzijdig ev.','onzijdig mv.'],[{label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}], (r,c)=>{
+    const n = elArtForms('n'); return c===0 ? n[['nomSg','genSg','datSg','accSg'][r]] : n[['nomPl','genPl','datPl','accPl'][r]];
   })}
-  <div class="note">Nominativus en accusativus van het onzijdig lidwoord hebben altijd dezelfde vorm — net als bij het zelfstandig naamwoord zelf.</div>
-
-  <h3>Gebruik van het lidwoord</h3>
-  <ul style="color:var(--ink-dim);">
-    <li>Het bepaald lidwoord wordt gebruikt wanneer iets al eerder genoemd is. Een naamwoord zónder lidwoord vertaal je vaak met "een": <em>ἐνταῦθα λέων οἰκεῖ</em> — daar woont <strong>een</strong> leeuw.</li>
-    <li>Het lidwoord wordt ook gebruikt bij bezit, en dan vertaal je het als bezittelijk voornaamwoord: <em>ὁ Ἡρακλῆς τὸ τόξον φέρει</em> — Herakles draagt <strong>zijn</strong> boog.</li>
-    <li>Eigennamen hebben soms wel, soms geen lidwoord: <em>ὁ Ἡρακλῆς</em> én <em>Ἡρακλῆς</em> zijn allebei gewoon "Herakles".</li>
-    <li>Bij het naamwoordelijk deel van het gezegde ontbreekt het lidwoord meestal.</li>
-  </ul>
-
-  <h2>Zelfstandig naamwoord: α/η-groep en o-groep</h2>
-  <p>Om de grote hoeveelheid zelfstandige naamwoorden te ordenen, onderscheiden we groepen. De <strong>α/η-groep</strong> heeft een stam op -α (meestal vrouwelijk, met δεσπότης als bekende mannelijke uitzondering); de <strong>o-groep</strong> heeft een stam op -ο.</p>
+  <div class="note">Het Grieks kent 5 naamvallen, elk met eigen functies: nominativus, genitivus, dativus, accusativus en vocativus (meestal gelijk aan de nominativus).</div>
+  <div class="note">Aan het lidwoord kun je zien: a. mannelijk/vrouwelijk/onzijdig, b. de naamval, c. enkelvoud of meervoud.</div>
+  `;
+}
+function elC3_Groepen(){
+  return `
+  <h3>Zelfstandig naamwoord: α/η-groep en o-groep</h3>
+  <p>Om de grote hoeveelheid zelfstandige naamwoorden te ordenen, onderscheiden we groepen. De <strong>α/η-groep</strong> heeft een stam op -α (meestal vrouwelijk, met δεσπότης als mannelijke uitzondering); de <strong>o-groep</strong> heeft een stam op -ο.</p>
   ${EL_DECL_WORDS.map(w=>tableHTML(['Enkelvoud','Meervoud'],[
     {label:'Nom.',color:'var(--nom)'},{label:'Gen.',color:'var(--gen)'},{label:'Dat.',color:'var(--dat)'},{label:'Acc.',color:'var(--acc)'}
   ], (r,c)=>{
     const keys=['nomSg','genSg','datSg','accSg','nomPl','genPl','datPl','accPl'];
     return c===0 ? w.forms[keys[r]] : w.forms[keys[r+4]];
   }, `${w.gr} (${w.g==='m'?'m.':w.g==='f'?'v.':'o.'}) — ${w.nl}, ${w.group}`)).join('')}
-  <div class="note">
-    <strong>Onthoud:</strong><br>
-    • Nominativus en accusativus onzijdig hebben altijd dezelfde vorm.<br>
-    • Nominativus en accusativus onzijdig meervoud gaan altijd uit op -α.<br>
-    • Let op dubbelzinnige vormen: <em>χώρας</em> is óf genitivus enkelvoud óf accusativus meervoud — alleen de zin maakt duidelijk welke.
-  </div>
+  <div class="note">Nominativus en accusativus onzijdig hebben altijd dezelfde vorm, en gaan in het meervoud altijd uit op -α.</div>
   `;
 }
-
-function elNounOefenen(){
-  const cats = {
-    lidwoord: {
-      title:'Het lidwoord', sub:'mannelijk, vrouwelijk & onzijdig',
-      words: EL_DECL_WORDS.map(w=>({ gr:w.gr, nl:w.nl, g:w.g })),
-      forms: (word)=>elArtForms(word.g)
-    },
-    naamwoorden: {
-      title:'Naamvalsuitgangen', sub:'α/η-groep & o-groep',
-      words: EL_DECL_WORDS,
-      forms: (word)=>word.forms
-    }
-  };
+function elC3_GebruikLidwoord(){
+  return `
+  <h3>Gebruik van het lidwoord</h3>
+  <ul style="color:var(--ink-dim);">
+    <li>Het bepaald lidwoord wordt gebruikt wanneer iets al eerder genoemd is. Een naamwoord zónder lidwoord vertaal je vaak met "een": <em>ἐνταῦθα λέων οἰκεῖ</em> — daar woont <strong>een</strong> leeuw.</li>
+    <li>Het lidwoord wordt ook gebruikt bij bezit, en dan vertaal je het als bezittelijk voornaamwoord: <em>ὁ Ἡρακλῆς τὸ τόξον φέρει</em> — Herakles draagt <strong>zijn</strong> boog.</li>
+    <li>Eigennamen hebben soms wel, soms geen lidwoord: <em>ὁ Ἡρακλῆς</em> én <em>Ἡρακλῆς</em> zijn allebei "Herakles".</li>
+    <li>Bij het naamwoordelijk deel van het gezegde ontbreekt het lidwoord meestal.</li>
+  </ul>
+  <div class="note">Het Grieks heeft geen onbepaald lidwoord (een).</div>
+  `;
+}
+function elC3_LidwoordOefenen(){
+  const cats = { lidwoord: { title:'Het lidwoord', sub:'mannelijk, vrouwelijk & onzijdig', words: EL_DECL_WORDS.map(w=>({ gr:w.gr, nl:w.nl, g:w.g })), forms: (word)=>elArtForms(word.g) } };
   return renderOefenCategoryPicker(cats, (word, formKey)=>{
     const caseKey = formKey.slice(0,3); const number = formKey.slice(3);
-    if(cats.lidwoord.words.includes(word)){
-      return `Wat is het juiste lidwoord in de <strong>${EL_CASE_LABEL[caseKey]} ${NUM_LABEL[number]}</strong> bij <span class="w">${word.gr}</span> (${word.nl}, ${GENDER_LABEL[word.g]})?`;
-    }
+    return `Wat is het juiste lidwoord in de <strong>${EL_CASE_LABEL[caseKey]} ${NUM_LABEL[number]}</strong> bij <span class="w">${word.gr}</span> (${word.nl}, ${GENDER_LABEL[word.g]})?`;
+  }, (w)=>w.gr, (word, formKey)=>{
+    const caseKey = formKey.slice(0,3); const number = formKey.slice(3);
+    return `${EL_CASE_LABEL[caseKey]} ${NUM_LABEL[number]}`;
+  }, undefined, undefined, 'EL');
+}
+function elC3_GroepenOefenen(){
+  const cats = { naamwoorden: { title:'Naamvalsuitgangen', sub:'α/η-groep & o-groep', words: EL_DECL_WORDS, forms: (word)=>word.forms } };
+  return renderOefenCategoryPicker(cats, (word, formKey)=>{
+    const caseKey = formKey.slice(0,3); const number = formKey.slice(3);
     return `Wat is de vorm in de <strong>${EL_CASE_LABEL[caseKey]} ${NUM_LABEL[number]}</strong> van <span class="w">${word.gr}</span> (${word.nl})?`;
   }, (w)=>w.gr, (word, formKey)=>{
     const caseKey = formKey.slice(0,3); const number = formKey.slice(3);
@@ -5513,32 +5629,7 @@ function elNounOefenen(){
   }, undefined, undefined, 'EL');
 }
 
-function elVerbLeren(){
-  return `
-  <h2>Werkwoorden: 3e persoon enkelvoud en meervoud</h2>
-  <p>Deze cursus begint met de 3e persoon (hij/zij/het en zij), de meest voorkomende vorm in de leesteksten.</p>
-  <table><thead><tr><th></th><th>uitgang</th><th>voorbeeld</th></tr></thead><tbody>
-  <tr><td>3e persoon enkelvoud</td><td>-ει of -εῖ</td><td><em>ἔχει</em> (hij/zij/het heeft), <em>ποιεῖ</em> (hij/zij/het doet, maakt)</td></tr>
-  <tr><td>3e persoon meervoud</td><td>-ουσι(ν) of -οῦσι(ν)</td><td><em>ἔχουσι(ν)</em> (zij hebben), <em>ποιοῦσι(ν)</em> (zij doen, maken)</td></tr>
-  </tbody></table>
-
-  <h3>Het werkwoord "zijn"</h3>
-  <table><thead><tr><th></th><th>vorm</th></tr></thead><tbody>
-  <tr><td>3e persoon enkelvoud</td><td><em>ἐστί(ν)</em> — (hij, zij, het) is</td></tr>
-  <tr><td>3e persoon meervoud</td><td><em>εἰσί(ν)</em> — zij zijn</td></tr>
-  </tbody></table>
-  <div class="note">Het slot-ν (het zgn. "bewegend nu") staat er vaak wel en soms niet — dat hangt af van het volgende woord, en verandert niets aan de betekenis.</div>
-
-  <h2>Niet uitgedrukt onderwerp</h2>
-  <p>In het Grieks hoeft het onderwerp niet apart genoemd te worden — dat kun je al aan de werkwoordsvorm zien, of uit de vorige zin afleiden. In het Nederlands moet er wél een onderwerp staan:</p>
-  <div class="card">
-    <p style="margin-bottom:0;"><em>ὁ Ἡρακλῆς τὴν δεινὴν ὕδραν ζητεῖ.</em> — Herakles zoekt de vreselijke slang.<br>
-    <em>τέλος δὲ τὴν ὕδραν εὑρίσκει.</em> — Tenslotte vindt <strong>hij</strong> de slang.</p>
-  </div>
-  <p style="color:var(--ink-faint);font-size:.85rem;">Het onderwerp van εὑρίσκει staat niet in de zin zelf — je haalt het (Herakles → "hij") uit de voorafgaande zin.</p>
-  `;
-}
-
+/* ---- Hoofdstuk 4 ---- */
 const EL_VERB_3E = [
   {gr:'ἔχει', nl:'(hij, zij, het) heeft'}, {gr:'ποιεῖ', nl:'(hij, zij, het) doet, maakt'},
   {gr:'φέρει', nl:'(hij, zij, het) draagt, brengt'}, {gr:'βαίνει', nl:'(hij, zij, het) gaat'},
@@ -5550,14 +5641,707 @@ const EL_VERB_3M = [
   {gr:'ἔχουσι(ν)', nl:'zij hebben'}, {gr:'ποιοῦσι(ν)', nl:'zij doen, maken'},
   {gr:'φοβοῦσι(ν)', nl:'zij maken bang'}, {gr:'εἰσί(ν)', nl:'zij zijn'}
 ];
-
-function elVerbOefenen(){
+function elC4_Werkwoorden(){
+  return `
+  <h3>Werkwoorden: 3e persoon enkelvoud en meervoud</h3>
+  <table><thead><tr><th></th><th>uitgang</th><th>voorbeeld</th></tr></thead><tbody>
+  <tr><td>3e persoon enkelvoud</td><td>-ει of -εῖ</td><td><em>ἔχει</em> (heeft), <em>ποιεῖ</em> (doet, maakt)</td></tr>
+  <tr><td>3e persoon meervoud</td><td>-ουσι(ν) of -οῦσι(ν)</td><td><em>ἔχουσι(ν)</em> (hebben), <em>ποιοῦσι(ν)</em> (doen, maken)</td></tr>
+  </tbody></table>
+  <h3>Het werkwoord "zijn"</h3>
+  <table><thead><tr><th></th><th>vorm</th></tr></thead><tbody>
+  <tr><td>3e persoon enkelvoud</td><td><em>ἐστί(ν)</em> — (hij, zij, het) is</td></tr>
+  <tr><td>3e persoon meervoud</td><td><em>εἰσί(ν)</em> — zij zijn</td></tr>
+  </tbody></table>
+  <div class="note">Het slot-ν (het "bewegend nu") staat er vaak wel en soms niet, afhankelijk van het volgende woord — de betekenis verandert niet.</div>
+  <h3>Niet uitgedrukt onderwerp</h3>
+  <p>In het Grieks hoeft het onderwerp niet apart genoemd te worden — dat blijkt al uit de werkwoordsvorm of de vorige zin. In het Nederlands moet er wél een onderwerp staan:</p>
+  <div class="card"><p style="margin-bottom:0;"><em>ὁ Ἡρακλῆς τὴν δεινὴν ὕδραν ζητεῖ.</em> — Herakles zoekt de slang.<br><em>τέλος δὲ τὴν ὕδραν εὑρίσκει.</em> — Tenslotte vindt <strong>hij</strong> de slang.</p></div>
+  `;
+}
+function elC4_WerkwoordenOefenen(){
   const cats = {
     enk: { title:'3e persoon enkelvoud', sub:'', words: EL_VERB_3E.map(w=>({greek:w.gr, nl:w.nl})), vocabOnly:true, srsLang:'EL' },
     mv: { title:'3e persoon meervoud', sub:'', words: EL_VERB_3M.map(w=>({greek:w.gr, nl:w.nl})), vocabOnly:true, srsLang:'EL' }
   };
   return renderOefenCategoryPicker(cats, null, (w)=>w.greek, undefined, undefined, undefined, 'EL');
 }
+function elC4_BijvNw(){
+  return `
+  <h3>Bijvoeglijke naamwoorden: -ος, -η/α, -ον-groep</h3>
+  <p>Een bijvoeglijk naamwoord zegt iets van een zelfstandig naamwoord en sluit zich daarbij aan: het krijgt dezelfde naamval, geslacht en getal. Voorbeelden: δεινός (verschrikkelijk, geducht) en μακρός (lang).</p>
+  ${tableHTML(['Mannelijk','Vrouwelijk','Onzijdig'],[
+    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
+  ], (r,c)=>{
+    const keys=['nomSg','genSg','datSg','accSg'];
+    const f = {m:['δεινός','δεινοῦ','δεινῷ','δεινόν'], f:['δεινή','δεινῆς','δεινῇ','δεινήν'], n:['δεινόν','δεινοῦ','δεινῷ','δεινόν']};
+    return [f.m,f.f,f.n][c][r];
+  }, 'δεινός — enkelvoud')}
+  ${tableHTML(['Mannelijk','Vrouwelijk','Onzijdig'],[
+    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
+  ], (r,c)=>{
+    const f = {m:['δεινοί','δεινῶν','δεινοῖς','δεινούς'], f:['δειναί','δεινῶν','δειναῖς','δεινάς'], n:['δεινά','δεινῶν','δεινοῖς','δεινά']};
+    return [f.m,f.f,f.n][c][r];
+  }, 'δεινός — meervoud')}
+  ${tableHTML(['Mannelijk','Vrouwelijk','Onzijdig'],[
+    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
+  ], (r,c)=>{
+    const f = {m:['μακρός','μακροῦ','μακρῷ','μακρόν'], f:['μακρά','μακρᾶς','μακρᾷ','μακράν'], n:['μακρόν','μακροῦ','μακρῷ','μακρόν']};
+    return [f.m,f.f,f.n][c][r];
+  }, 'μακρός — enkelvoud')}
+  ${tableHTML(['Mannelijk','Vrouwelijk','Onzijdig'],[
+    {label:'Nom.'},{label:'Gen.'},{label:'Dat.'},{label:'Acc.'}
+  ], (r,c)=>{
+    const f = {m:['μακροί','μακρῶν','μακροῖς','μακρούς'], f:['μακραί','μακρῶν','μακραῖς','μακράς'], n:['μακρά','μακρῶν','μακροῖς','μακρά']};
+    return [f.m,f.f,f.n][c][r];
+  }, 'μακρός — meervoud')}
+  <div class="note">Het vrouwelijk gaat meestal op -η (als bij μάχη), maar na een -ρ, -ε of -ι op -α (als bij χώρα) — de <strong>ρ, ε, ι-regel</strong>.</div>
+  <div class="note">Ook bij bijvoeglijke naamwoorden zijn nominativus en accusativus onzijdig altijd gelijk.</div>
+  `;
+}
+function elC4_GebruikBijvNw(){
+  return `
+  <h3>Gebruik van het bijvoeglijk naamwoord</h3>
+  <p><strong>1. Als bijvoeglijke bepaling</strong> — <em>τὸ δεινὸν θηρίον</em> het verschrikkelijke beest. Met lidwoord staat het bijvoeglijk naamwoord tussen lidwoord en zelfstandig naamwoord, of erna met herhaling van het lidwoord: <em>τὸ θηρίον τὸ δεινόν</em>. Zonder lidwoord mag het zowel vóór als achter staan: <em>μεγάλη ὕδρα</em> / <em>ὕδρα μεγάλη</em>.</p>
+  <p><strong>2. Als naamwoordelijk deel van het gezegde</strong> — dan past het zich aan in naamval en geslacht bij het onderwerp: <em>ἡ ὕδρα μεγάλη ἐστὶ καὶ φοβερά</em> — de slang is groot en angstaanjagend.</p>
+  <h3>Samengestelde bijvoeglijke naamwoorden</h3>
+  <p>Deze bijvoeglijke naamwoorden op -ος (soms -ους) bestaan uit twee delen die elk een eigen betekenis hebben:</p>
+  <table><thead><tr><th>woord</th><th>betekenis</th><th>delen</th></tr></thead><tbody>
+  <tr><td>ἀ-θάνατος</td><td>onsterfelijk</td><td>ἀ- (on-) + θάνατος (dood)</td></tr>
+  <tr><td>εὔ-νους</td><td>goedgezind</td><td>εὖ (goed) + νοῦς (geest)</td></tr>
+  <tr><td>ἄ-δικος</td><td>onrechtvaardig</td><td>ἀ- (on-) + δίκη (recht)</td></tr>
+  </tbody></table>
+  <div class="note">Deze samengestelde bijvoeglijke naamwoorden hebben geen vrouwelijke uitgang — de mannelijke vorm wordt ook voor het vrouwelijk gebruikt (adjectiva van twee uitgangen).</div>
+  `;
+}
+
+/* ---- Hoofdstuk 5 ---- */
+function elC5_Genitivus(){
+  return `
+  <h3>Genitivus</h3>
+  ${tableHTML(['o-groep (δοῦλος)','o-groep (θηρίον)','α/η-groep (μάχη)','α/η-groep (χώρα)','α/η-groep (δεσπότης)'],[
+    {label:'Enkelvoud'},{label:'Meervoud'}
+  ], (r,c)=>{
+    const vals = [['τοῦ δούλου','τῶν δούλων'],['τοῦ θηρίου','τῶν θηρίων'],['τῆς μάχης','τῶν μαχῶν'],['τῆς χώρας','τῶν χωρῶν'],['τοῦ δεσπότου','τῶν δεσποτῶν']];
+    return vals[c][r];
+  })}
+  <h3>Gebruik van de genitivus</h3>
+  <p><strong>1. Bezit</strong>: drukt uit dat iets van iemand/iets is — <em>ὁ τοῦ πολέμου θεός</em> de god van de oorlog.<br>
+  <strong>2. Als aanvulling</strong> bij bepaalde werkwoorden en bijvoeglijke naamwoorden (herkenbaar aan "+ gen." in de woordenlijst) — <em>τῆς καλῆς ζώνης ἐπιθυμῶ</em> ik verlang naar de mooie gordel.<br>
+  <strong>3. Na voorzetsels</strong> — <em>μετὰ τῶν ἑταίρων</em> samen met zijn makkers.</p>
+  <h3>Plaats van de genitivus</h3>
+  <p>De genitivus staat 1. tussen lidwoord en zelfstandig naamwoord (<em>ὁ τοῦ πολέμου θεός</em>), of 2. na het zelfstandig naamwoord, waarbij het lidwoord meestal herhaald wordt (<em>ὁ θεὸς ὁ τοῦ πολέμου</em>).</p>
+  <div class="note">Herhaling van het lidwoord geeft aan dat de volgende bepaling iets meedeelt over het zelfstandig naamwoord.</div>
+  `;
+}
+function elC5_Dativus(){
+  return `
+  <h3>Dativus</h3>
+  ${tableHTML(['o-groep (δοῦλος)','o-groep (θηρίον)','α/η-groep (μάχη)','α/η-groep (χώρα)','α/η-groep (δεσπότης)'],[
+    {label:'Enkelvoud'},{label:'Meervoud'}
+  ], (r,c)=>{
+    const vals = [['τῷ δούλῳ','τοῖς δούλοις'],['τῷ θηρίῳ','τοῖς θηρίοις'],['τῇ μάχῃ','ταῖς μάχαις'],['τῇ χώρᾳ','ταῖς χώραις'],['τῷ δεσπότῃ','τοῖς δεσπόταις']];
+    return vals[c][r];
+  })}
+  <h3>Gebruik van de dativus</h3>
+  <p><strong>1. Als aanvulling</strong> bij bepaalde werkwoorden en bijvoeglijke naamwoorden (+ dat.) — <em>τῇ βασιλείᾳ χαλεπαίνει</em> zij is boos op de koningin.<br>
+  <strong>2. Na voorzetsels</strong> — <em>ἐν τῇ οἰκίᾳ</em> in haar huis, <em>σὺν ἵπποις</em> met paarden.<br>
+  <strong>3. De betrokken persoon</strong> (indirect object / meewerkend voorwerp) — <em>παρέχεις μοι τὴν ζώνην;</em> geef je mij je gordel?</p>
+  <p><strong>4. In bepalingen</strong> (dativus van zaken/dingen):<br>
+  &nbsp;&nbsp;a. instrument/middel — <em>τὸν Πλούτωνα λόγοις αἰτεῖ</em> hij vraagt Plouton door middel van woorden.<br>
+  &nbsp;&nbsp;b. oorzaak — <em>χόλῳ δεινῷ βαίνει εἰς τὴν χώραν</em> door hevige woede gaat ze naar het gebied.<br>
+  &nbsp;&nbsp;c. manier/omstandigheid — <em>δολερᾷ ἐπινοίᾳ λέγει</em> met listige bedoeling zegt ze.</p>
+  <p><strong>5. Bezit</strong>: behalve met "hebben/bezitten" kan bezit ook met dativus + ἐστί(ν)/εἰσί(ν): <em>τῇ Ἱππολύτῃ ζώνη καλή ἐστιν</em> — voor Hippolyte is een mooie gordel = Hippolyte heeft een mooie gordel.</p>
+  `;
+}
+function elC5_WoordenNietVeranderen(){
+  return `
+  <h3>Woorden die niet veranderen</h3>
+  <p><strong>Voorzetsels</strong> — <em>μετά</em> + gen. samen met; <em>ἐν</em> + dat. in, op, bij; <em>εἰς</em> + acc. naar, naar binnen, tot.</p>
+  <p><strong>Bijwoorden</strong> maken duidelijk waar, wanneer of hoe iets gebeurt: <em>ἐνταῦθα</em> daar, <em>αὐτίκα</em> meteen/onmiddellijk, <em>οὕτω(ς)</em> zo/op die manier. Ook bijwoorden die de mate aangeven, zoals <em>μάλα</em> erg/zeer.</p>
+  <p><strong>Partikels</strong> leggen een verband tussen twee zinnen of zinsdelen: <em>δέ</em> en/maar (meestal onvertaald, wél na een komma); <em>μέν</em> geeft aan dat er nog een zin komt die met δέ begint (μέν blijft onvertaald); <em>δή</em> dan, dus (geeft nadruk, vaak moeilijk te vertalen); <em>οὖν</em> dan, nu (als een verhaal verdergaat) of dus (in een conclusie).</p>
+  `;
+}
+
+/* ---- Hoofdstuk 6 ---- */
+function elC6_Werkwoorden(){
+  return `
+  <h3>Werkwoorden: infinitivus, stam, persoonsvormen</h3>
+  <p>De onbepaalde wijs (infinitivus) gaat uit op -ειν (type λύει, dus λύειν) of -εῖν (type ποιεῖ, dus ποιεῖν) en wordt gebruikt als aanvulling bij bepaalde werkwoorden: <em>σώζειν αὐτὸν ἐθέλει ἡ Ἀριάδνη</em> — Ariadne wil hem redden.</p>
+  <p>De werkwoordstam van het type λύει is λυ-; van het type ποιεῖ is ποιε- (eindigt op -ε). Bij de 1e en 2e persoon meervoud staat tussen stam en uitgang een bindvocaal -ο of -ε: λύ-ο-μεν, λύ-ε-τε.</p>
+  <div class="note">Bij ποιέω ontstaan ποιοῦμεν (uit ποιέ-ομεν, ε+ο=ου) en ποιεῖτε (uit ποιέ-ετε, ε+ε=ει) door samentrekking.</div>
+  ${tableHTML(['λύω (stam λυ-)','ποιέω (stam ποιε-)'], [
+    {label:'1e ev.'},{label:'2e ev.'},{label:'3e ev.'},{label:'1e mv.'},{label:'2e mv.'},{label:'3e mv.'},{label:'infinitivus'}
+  ], (r,c)=>{
+    const luo=['λύω','λύεις','λύει','λύομεν','λύετε','λύουσι(ν)','λύειν'];
+    const poieo=['ποιῶ','ποιεῖς','ποιεῖ','ποιοῦμεν','ποιεῖτε','ποιοῦσι(ν)','ποιεῖν'];
+    return c===0?luo[r]:poieo[r];
+  })}
+  <h3>Gebiedende wijs (imperativus)</h3>
+  ${tableHTML(['λύω','ποιέω'],[{label:'Enkelvoud'},{label:'Meervoud'}], (r,c)=>{
+    const vals=[['λῦε','λύετε'],['ποίει','ποιεῖτε']]; return vals[c][r];
+  })}
+  <div class="note">Bij een gebiedende wijs gebruikt het Grieks de ontkenning μή in plaats van οὐ(κ). ποιεῖ (hij doet) en ποίει (doe!) herken je aan het verschil in accent.</div>
+  <h3>De aangesproken persoon: vocativus</h3>
+  <p>Het Grieks gebruikt voor de aangesproken persoon meestal de nominativus, vaak voorafgegaan door ὦ (blijft onvertaald). Woorden op -ος en -ης hebben in het enkelvoud een eigen vocativus-uitgang: ἄνθρωπος → ὦ ἄνθρωπε, δεσπότης → ὦ δέσποτα.</p>
+  <div class="note">De vocativus meervoud is altijd gelijk aan de nominativus meervoud.</div>
+  <h3>Praesens van εἰμί "zijn"</h3>
+  ${tableHTML(['praesens','imperativus','infinitivus'],[
+    {label:'1e ev.'},{label:'2e ev.'},{label:'3e ev.'},{label:'1e mv.'},{label:'2e mv.'},{label:'3e mv.'}
+  ], (r,c)=>{
+    if(c===0) return ['εἰμί','εἶ','ἐστί(ν)','ἐσμέν','ἐστέ','εἰσί(ν)'][r];
+    if(c===1) return ['','ἴσθι','','','ἔστε',''][r];
+    return ['','','','','',''][r]===''&&r===0 ? 'εἶναι' : '';
+  })}
+  `;
+}
+function elC6_WerkwoordenB(){
+  return `
+  <h3>Onderwerp meervoud, werkwoord enkelvoud</h3>
+  <p>Wanneer het onderwerp een onzijdig meervoud is, staat de persoonsvorm meestal in het enkelvoud: <em>τὰ τέκνα δακρύει</em> — de kinderen huilen.</p>
+  <h3>Predicatief</h3>
+  <p>Let op μόνος in: <em>ὁ Θησεὺς μόνος τὸν Μινώταυρον ζητεῖ</em> — Theseus zoekt alleen/als enige de Minotauros. Hier zegt het bijvoeglijk naamwoord (μόνος) niet alleen iets over Theseus, maar ook over de manier waarop hij handelt (ζητεῖ). Dit heet predicatief of "dubbelverbonden" gebruik — in het Nederlands vaak te vertalen met "als" ("als enige").</p>
+  <div class="note">Bij het predicatieve gebruik van het bijvoeglijk naamwoord staat vóór het bijvoeglijk naamwoord geen lidwoord.</div>
+  `;
+}
+function elC6_PersVoornaamwoord(){
+  return `
+  <h3>Persoonlijk voornaamwoord</h3>
+  <p>Bij het Griekse werkwoord kun je aan de uitgang zien welke persoon bedoeld wordt. Toch wordt vaak een persoonlijk voornaamwoord als onderwerp toegevoegd, wanneer het onderwerp nadruk heeft: <em>σὺ μάλα ἰσχυρὸς εἶ</em> jij bent erg dapper; <em>ἡμεῖς ἐκβαίνειν ἐπιθυμοῦμεν</em> wíj willen eruit gaan.</p>
+  <h3>Woordvolgorde</h3>
+  <p>In het Nederlands maakt de plaats van een zelfstandig naamwoord duidelijk wat de functie is; in het Grieks maakt de naamval dat duidelijk. Daardoor is de woordvolgorde vrijer:</p>
+  <div class="card"><p style="margin-bottom:0;"><em>ὁ Θησεὺς τὴν κεφαλὴν λαμβάνει</em> / <em>τὴν κεφαλὴν ὁ Θησεὺς λαμβάνει</em> / <em>λαμβάνει τὴν κεφαλὴν ὁ Θησεύς</em> — alle drie: "Theseus pakt de kop vast" (met verschil in nadruk).</p></div>
+  `;
+}
+
+/* ---- Hoofdstuk 7 ---- */
+function elC7_MegasPolys(){
+  return `
+  <h3>Bijvoeglijk naamwoord μέγας (groot) en πολύς (veel)</h3>
+  ${tableHTML(['mnl.','vrl.','onz.'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const m=['μέγας','μεγάλου','μεγάλῳ','μέγαν','μεγάλοι','μεγάλων','μεγάλοις','μεγάλους'];
+    const f=['μεγάλη','μεγάλης','μεγάλῃ','μεγάλην','μεγάλαι','μεγάλων','μεγάλαις','μεγάλας'];
+    const n=['μέγα','μεγάλου','μεγάλῳ','μέγα','μεγάλα','μεγάλων','μεγάλοις','μεγάλα'];
+    return [m,f,n][c][r];
+  })}
+  ${tableHTML(['mnl.','vrl.','onz.'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const m=['πολύς','πολλοῦ','πολλῷ','πολύν','πολλοί','πολλῶν','πολλοῖς','πολλούς'];
+    const f=['πολλή','πολλῆς','πολλῇ','πολλήν','πολλαί','πολλῶν','πολλαῖς','πολλάς'];
+    const n=['πολύ','πολλοῦ','πολλῷ','πολύ','πολλά','πολλῶν','πολλοῖς','πολλά'];
+    return [m,f,n][c][r];
+  }, 'πολύς')}
+  <h3>Vrouwelijke zelfstandige naamwoorden op -ος</h3>
+  <p>Een kleine groep zelfstandige naamwoorden heeft het vrouwelijk lidwoord ἡ, maar de uitgangen van δοῦλος (o-groep) — bijv. ἡ νῆσος (het eiland). Andere voorbeelden: ἡ θεός (godin), ἡ παρθένος (meisje, maagd), ἡ ἄλοχος (echtgenote), ἡ ἔξοδος (uitgang), ἡ Νάξος (Naxos), ἡ σορός (grafurn).</p>
+  `;
+}
+function elC7_PersVoornaamwoord3e(){
+  return `
+  <h3>Persoonlijk voornaamwoord 3e persoon</h3>
+  ${tableHTML(['mannelijk','vrouwelijk','onzijdig'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const m=['—','αὐτοῦ','αὐτῷ','αὐτόν','—','αὐτῶν','αὐτοῖς','αὐτούς'];
+    const f=['—','αὐτῆς','αὐτῇ','αὐτήν','—','αὐτῶν','αὐταῖς','αὐτάς'];
+    const n=['—','αὐτοῦ','αὐτῷ','αὐτό','—','αὐτῶν','αὐτοῖς','αὐτά'];
+    return [m,f,n][c][r];
+  })}
+  <div class="note">In de genitivus, dativus en accusativus (dus nooit in de nominativus) wordt αὐτός gebruikt als persoonlijk voornaamwoord van de 3e persoon: <em>μετ' αὐτῶν</em> samen met hen, <em>δῶρα πάρεχε αὐτῷ</em> geef geschenken aan hem.</div>
+  <div class="note">Ook als bezitsbepaling: <em>ἡ φωνὴ αὐτῆς</em> de stem van haar = haar stem.</div>
+  `;
+}
+function elC7_Autos(){
+  return `
+  <h3>Gebruik αὐτός</h3>
+  <p><strong>Als bijvoeglijke bepaling: "zelf"</strong> — αὐτός enz. kan ook bij een zelfstandig naamwoord, eigennaam of voornaamwoord staan met de betekenis "zelf": <em>καὶ ἐμὲ αὐτὸν ἀποστερεῖ τοῦ βίου</em> ook mijzelf berooft hij van het leven. Ook de nominativus αὐτός, αὐτή, αὐτό enz. wordt zo gebruikt: <em>ἀλλ' ἐγὼ αὐτός!</em> maar ik zélf!</p>
+  <p><strong>Lidwoord + αὐτός: "dezelfde"</strong> — een lidwoord direct vóór αὐτός, αὐτή, αὐτό geeft de betekenis "dezelfde"/"hetzelfde": <em>ῥίπτει ἑαυτὸν ἀπὸ τῆς αὐτῆς ἀκτῆς</em> hij werpt zich van dezelfde hoge kust.</p>
+  <div class="note">αὐτοῦ, αὐτῆς, αὐτοῦ enz. betekenen "zelf" wanneer ze in geslacht, getal en naamval bij een zelfstandig naamwoord, eigennaam of voornaamwoord horen; zelfstandig ("los") gebruikt betekenen ze "hem", "haar", "het" enz.</div>
+  <div class="note">De nominativus enk. en mv. van αὐτός, αὐτή, αὐτό betekent altijd "zelf", en met lidwoord ervoor "dezelfde"/"hetzelfde".</div>
+  `;
+}
+
+/* ---- Hoofdstuk 8 ---- */
+function elC8_Imperfectum(){
+  return `
+  <h3>Het imperfectum</h3>
+  <p>Om iets uit het verleden mee te delen, gebruikt het Grieks onder andere het <strong>imperfectum</strong>.</p>
+  ${tableHTML(['λύω','ποιέω','εἰμί'],[{label:'1e ev.'},{label:'2e ev.'},{label:'3e ev.'},{label:'1e mv.'},{label:'2e mv.'},{label:'3e mv.'}], (r,c)=>{
+    const luo=['ἔλυον','ἔλυες','ἔλυε(ν)','ἐλύομεν','ἐλύετε','ἔλυον'];
+    const poieo=['ἐποίουν','ἐποίεις','ἐποίει','ἐποιοῦμεν','ἐποιεῖτε','ἐποίουν'];
+    const eimi=['ἦ(ν)','ἦσθα','ἦν','ἦμεν','ἦτε','ἦσαν'];
+    return [luo,poieo,eimi][c][r];
+  })}
+  <div class="note">ἔλυον betekent 1. ik maakte los, 2. zij maakten los (uit de context blijkt welke). Zo ook ἐποίουν: 1. ik deed/maakte, 2. zij deden/maakten.</div>
+  <h3>Augment</h3>
+  <p>Het voorvoegsel ἐ- dient als signaal voor de verleden tijd en heet het <strong>augment</strong>.</p>
+  <div class="note">Bij werkwoorden die beginnen met een ρ wordt de ρ (meestal) verdubbeld: ῥίπτω → ἔρριπτον (gooien, werpen).</div>
+  `;
+}
+function elC8_AugmentBeginklinker(){
+  return `
+  <h3>Augment bij werkwoorden met beginklinker</h3>
+  <p>Begint een werkwoord met een klinker of tweeklank, dan is er geen augment ἐ-; in plaats daarvan wordt de (korte) beginklinker verlengd:</p>
+  <table><thead><tr><th>begin</th><th>wordt</th><th>voorbeeld</th></tr></thead><tbody>
+  <tr><td>α-</td><td>η-</td><td>ἀκούω → ἤκουον (horen)</td></tr>
+  <tr><td>ε-</td><td>η-</td><td>ἐθέλω → ἤθελον (willen)</td></tr>
+  <tr><td>ο-</td><td>ω-</td><td>ὁμολογέω → ὡμολόγουν (akkoord gaan)</td></tr>
+  <tr><td>η</td><td>blijft η-</td><td>ἥκω → ἦκον (komen)</td></tr>
+  <tr><td>ω</td><td>blijft ω-</td><td>ὠφελέω → ὠφέλουν (helpen)</td></tr>
+  <tr><td>ι-, υ-</td><td>blijven gelijk</td><td>ἱκετεύω → ἱκέτευον (smeken)</td></tr>
+  <tr><td>αι-</td><td>η-</td><td>αἰτέω → ᾔτουν (vragen)</td></tr>
+  <tr><td>οι-</td><td>ω-</td><td>οἰκέω → ᾤκουν (wonen)</td></tr>
+  <tr><td>ευ-</td><td>ηυ-</td><td>εὑρίσκω → ηὕρισκον (vinden)</td></tr>
+  </tbody></table>
+  <div class="note">Een uitzondering vormt ἔχω (hebben): imperfectum εἶχον.</div>
+  <div class="note">Begint een imperfectum met η-, dan kan de beginklinker van het werkwoord α-, ε- of η- zijn.</div>
+  `;
+}
+function elC8_AugmentSamengesteld(){
+  return `
+  <h3>Augment bij samengestelde werkwoorden</h3>
+  <p>Veel werkwoorden zijn samengesteld: ze beginnen met een voorzetsel. Bij zulke werkwoorden staat het augment áchter het voorzetsel. Eindigt het voorzetsel (ἀπό, διά, κατά, ἀνά, παρά, ὑπό, ἐπί) op een klinker, dan komt het augment in plaats van die klinker:</p>
+  <table><tbody>
+  <tr><td>ἐπιθυμέω</td><td>:</td><td>ἐπεθύμουν</td></tr>
+  <tr><td>ἀναβαίνω</td><td>:</td><td>ἀνέβαινον</td></tr>
+  <tr><td>ἐνδύνω</td><td>:</td><td>ἐνέδυνον</td></tr>
+  <tr><td>ἀποφέρω</td><td>:</td><td>ἀπέφερον</td></tr>
+  </tbody></table>
+  <div class="note">Uitzondering: περί → περιέβαινον. Bij πρό kan samentrekking van de -ο en het augment ἐ- optreden: προέβαινον of προὔβαινον.</div>
+  <h3>Praesens historicum ("ooggetuigen-praesens")</h3>
+  <p>In een verhaal dat zich in het verleden afspeelt, wordt soms een praesens-vorm gebruikt met een ooggetuigen-effect — alsof we er zelf bij zijn: <em>οἱ θεοὶ ἐξαίφνης τὸν ἄνεμον παύουσιν</em> — de goden laten de wind plotseling ophouden.</p>
+  `;
+}
+
+/* ---- Hoofdstuk 9 ---- */
+function elC9_Medeklinkergroep(){
+  return `
+  <h3>Zelfstandig naamwoord: gemengde groep</h3>
+  <p>Alle zelfstandige en bijvoeglijke naamwoorden die niet tot de α/η-groep of de o-groep horen, vallen onder de zogenaamde <strong>gemengde groep</strong>. De stammen van deze groep eindigen soms op een medeklinker, soms op een klinker: de <strong>medeklinkergroep</strong> en de klinkergroep.</p>
+  <p>Om de medeklinkergroep te kunnen verbuigen, moet je weten op welke medeklinker de stam eindigt. Die stam-medeklinker is meestal niet in de nominativus te zien, maar wél in de genitivus — daarom staat in woordenboeken altijd de genitivus enkelvoud erbij.</p>
+  <div class="note">Uitgangen medeklinkergroep — enkelvoud: — (nom.), -ος (gen.), -ι (dat.), -α (acc.); meervoud: -ες (nom.), -ων (gen.), -σι(ν) (dat.), -ας (acc.).</div>
+  ${tableHTML(['ὁ σωτήρ redder','ἡ γυνή vrouw','ὁ λέων leeuw','ὁ πατήρ vader','τὸ σῶμα lichaam'],[
+    {label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}
+  ], (r,c)=>{
+    const soter=['σωτήρ','σωτῆρος','σωτῆρι','σωτῆρα','σωτῆρες','σωτήρων','σωτῆρσι(ν)','σωτῆρας'];
+    const gyne=['γυνή','γυναικός','γυναικί','γυναῖκα','γυναῖκες','γυναικῶν','γυναιξί(ν)','γυναῖκας'];
+    const leon=['λέων','λέοντος','λέοντι','λέοντα','λέοντες','λεόντων','λέουσι(ν)','λέοντας'];
+    const pater=['πατήρ','πατρός','πατρί','πατέρα','πατέρες','πατέρων','πατράσι(ν)','πατέρας'];
+    const soma=['σῶμα','σώματος','σώματι','σῶμα','σώματα','σωμάτων','σώμασι(ν)','σώματα'];
+    return [soter,gyne,leon,pater,soma][c][r];
+  })}
+  <h3>Dativus meervoud medeklinkergroep</h3>
+  <p>De combinatie van de eind-medeklinker van de stam met de -σ- van de uitgang -σι(ν) geeft veranderingen: κ/γ/χ + σ → ξ; τ/δ/θ + σ → σ (τ,δ,θ verdwijnen); π/β/φ + σ → ψ; ν + σ → σ (ν verdwijnt); ντ + σ → σ (ντ verdwijnt, stamklinker verlengd).</p>
+  <div class="note">Dativus meervoud van πατήρ, μήτηρ, ἀνήρ, θυγάτηρ gaat uit op -ασι(ν): πατράσι(ν) (uit πατρ-σιν), ἀνδράσι(ν) (uit ἀνδρ-σιν).</div>
+  <h3>Bijvoeglijke naamwoorden σώφρων en πᾶς</h3>
+  ${tableHTML(['σώφρων mnl./vr.','σώφρων onz.'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const mv=['σώφρων','σώφρονος','σώφρονι','σώφρονα','σώφρονες','σωφρόνων','σώφροσι(ν)','σώφρονας'];
+    const onz=['σῶφρον','σώφρονος','σώφρονι','σῶφρον','σώφρονα','σωφρόνων','σώφροσι(ν)','σώφρονα'];
+    return c===0?mv[r]:onz[r];
+  })}
+  ${tableHTML(['mnl.','vrl.','onz.'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const m=['πᾶς','παντός','παντί','πάντα','πάντες','πάντων','πᾶσι(ν)','πάντας'];
+    const f=['πᾶσα','πάσης','πάσῃ','πᾶσαν','πᾶσαι','πασῶν','πάσαις','πάσας'];
+    const n=['πᾶν','παντός','παντί','πᾶν','πάντα','πάντων','πᾶσι(ν)','πάντα'];
+    return [m,f,n][c][r];
+  }, 'πᾶς — ieder, geheel, alle(n)')}
+  `;
+}
+function elC9_GemengdBijvNw(){
+  return `
+  <h3>Gemengde groep: bijvoeglijke naamwoorden</h3>
+  <p>De gemengde groep bijvoeglijke naamwoorden kent twee types:<br>
+  1. Met twee uitgangen: één uitgang voor mannelijk/vrouwelijk en één voor onzijdig, bijv. σώφρων, σῶφρον (verstandig).<br>
+  2. Met drie uitgangen, waarbij het vrouwelijk niet volgens de gemengde groep maar volgens de α/η-groep wordt verbogen: πᾶς, πᾶσα, πᾶν (1. ieder, 2. geheel, 3. mv. alle(n)).</p>
+  <h3>Het persoonlijk voornaamwoord</h3>
+  ${tableHTML(['ἐγώ ik / ἡμεῖς wij','σύ jij / ὑμεῖς jullie'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const ik=['ἐγώ','ἐμοῦ / μου','ἐμοί / μοι','ἐμέ / με','ἡμεῖς','ἡμῶν','ἡμῖν','ἡμᾶς'];
+    const jij=['σύ','σοῦ / σου','σοί / σοι','σέ / σε','ὑμεῖς','ὑμῶν','ὑμῖν','ὑμᾶς'];
+    return c===0?ik[r]:jij[r];
+  })}
+  <div class="note">De vormen ἐμοῦ, σοῦ enz. (met accent) zijn nadrukkelijker dan μου, σου enz. — vergelijk in het Nederlands "mij" naast "me", "jou" naast "je".</div>
+  <h3>Bezittelijk voornaamwoord 1e en 2e persoon</h3>
+  <p>ἐμός, ἐμή, ἐμόν (mijn); ἡμέτερος, ἡμετέρα, ἡμέτερον (ons/onze); σός, σή, σόν (jouw/uw); ὑμέτερος, ὑμετέρα, ὑμέτερον ((van) jullie/uw).</p>
+  <div class="note">ἐμός en σός worden verbogen als δεινός; ἡμέτερος en ὑμέτερος als μακρός. Een bezittelijk voornaamwoord gedraagt zich als een bijvoeglijk naamwoord: het komt in naamval, geslacht en getal overeen met het woord waarbij het hoort.</div>
+  `;
+}
+
+/* ---- Hoofdstuk 10 ---- */
+function elC10_Aoristus(){
+  return `
+  <h3>De aoristus</h3>
+  <p>Naast de praesensstam (waarmee zowel het praesens als het imperfectum wordt gevormd) heeft het Grieks nog andere werkwoordsstammen. Eén daarvan is de <strong>aoristusstam</strong>, waarmee een verleden tijd, gebiedende wijs/imperativus en infinitivus worden gevormd.</p>
+  <h3>Sigmatische aoristus</h3>
+  <p>Bij veel werkwoorden wordt de aoristusstam gevormd door -σα (soms -σ) aan de werkwoordstam toe te voegen. Vanwege de -σ- in alle vormen heet dit de <strong>sigmatische aoristus</strong>.</p>
+  ${tableHTML(['indicativus','imperativus','infinitivus'],[{label:'1e ev.'},{label:'2e ev.'},{label:'3e ev.'},{label:'1e mv.'},{label:'2e mv.'},{label:'3e mv.'}], (r,c)=>{
+    if(c===0) return ['ἔλυσα','ἔλυσας','ἔλυσε(ν)','ἐλύσαμεν','ἐλύσατε','ἔλυσαν'][r];
+    if(c===1) return ['','λῦσον','','','λύσατε',''][r];
+    return r===0 ? 'λῦσαι' : '';
+  }, 'λύω — losmaken')}
+  <div class="note">Een aoristus kun je op 3 manieren vertalen: ἔλυσα = 1. ik maakte los, 2. ik heb losgemaakt, 3. ik had losgemaakt.</div>
+  <h3>Aoristus van ε-werkwoorden (type ποιέω)</h3>
+  <p>Bij werkwoorden van het type ποιε- komt -σ(α)- achter de verlengde stamklinker: ἐποίησα. Uitzonderingen: καλέω → ἐκάλεσα, δοκέω → ἔδοξα. Ook ἐθέλω (geen ε-werkwoord!) heeft aoristus ἠθέλησα.</p>
+  `;
+}
+function elC10_AoristusMedeklinker(){
+  return `
+  <h3>Vorming aoristus bij medeklinkerstam</h3>
+  <p>De stam van een werkwoord eindigt vaak op een medeklinker. De combinatie van de σ van -σ(α)- met de eind-medeklinker van de werkwoordstam geeft veranderingen:</p>
+  <table><thead><tr><th>medeklinker</th><th>voorbeeld</th><th>stam</th><th>aoristus</th></tr></thead><tbody>
+  <tr><td rowspan="2">π/β/φ/πτ + σ → ψ</td><td>βλέπω</td><td>βλεπ-</td><td>ἔβλεψα</td></tr>
+  <tr><td>τύπτω</td><td>τυπ-</td><td>ἔτυψα</td></tr>
+  <tr><td rowspan="2">κ/γ/χ/ττ + σ → ξ</td><td>διώκω</td><td>διωκ-</td><td>ἐδίωξα</td></tr>
+  <tr><td>λέγω</td><td>λεγ-</td><td>ἔλεξα</td></tr>
+  <tr><td rowspan="2">τ/δ/θ/ζ + σ → σ</td><td>νομίζω</td><td>νομιδ-</td><td>ἐνόμισα</td></tr>
+  <tr><td>πείθω</td><td>πειθ-</td><td>ἔπεισα</td></tr>
+  </tbody></table>
+  <div class="note">τ, δ, θ, ζ verdwijnen dus voor de σ.</div>
+  <h3>Gebruik aoristus</h3>
+  <p>Een aoristusstam stelt een gebeurtenis voor als <strong>afgesloten</strong> (constaterend): <em>οἱ Τρῶες τῶν Ἀχαιῶν ἐκράτησαν</em> — de Trojanen hebben de Grieken overwonnen (met nadruk op de geslaagde overwinning).</p>
+  <p>Een praesens of imperfectum stelt een gebeurtenis voor als <strong>niet-afgesloten</strong>: een herhaalde handeling, gewoonte of achtergrondgebeurtenis: <em>οἱ Τρῶες τῶν Ἀχαιῶν ἐκράτουν</em> — de Trojanen waren bezig de Grieken te overwinnen (nog onduidelijk of het lukt).</p>
+  `;
+}
+function elC10_PseudoSigmatisch(){
+  return `
+  <h3>Pseudo-sigmatische aoristus</h3>
+  <p>Werkwoorden waarvan de stam uitgaat op μ, λ, ν of ρ (de medeklinkers van "molenaar") hebben geen sigmatische, maar een <strong>pseudo-sigmatische</strong> aoristus: deze heeft de uitgangen van de sigmatische aoristus, maar de σ ontbreekt! Je herkent 'm meestal aan de verlengde werkwoordstam:</p>
+  <table><tbody>
+  <tr><td>ἀγγέλλω (berichten)</td><td>:</td><td>ἤγγειλα (stam ἀγγελ-)</td></tr>
+  <tr><td>μένω (blijven)</td><td>:</td><td>ἔμεινα (stam μεν-)</td></tr>
+  <tr><td>αἴρω (optillen)</td><td>:</td><td>ἦρα (stam ἀρ-)</td></tr>
+  </tbody></table>
+  ${tableHTML(['indicativus','imperativus','infinitivus'],[{label:'1e ev.'},{label:'2e ev.'},{label:'3e ev.'},{label:'1e mv.'},{label:'2e mv.'},{label:'3e mv.'}], (r,c)=>{
+    if(c===0) return ['ἤγγειλα','ἤγγειλας','ἤγγειλε(ν)','ἠγγείλαμεν','ἠγγείλατε','ἤγγειλαν'][r];
+    if(c===1) return ['','ἄγγειλον','','','ἀγγείλατε',''][r];
+    return r===0 ? 'ἀγγεῖλαι' : '';
+  }, 'ἀγγέλλω — berichten')}
+  <div class="note">Je ziet geen onderscheid tussen praesens- en aoristusstam bij -ει-, -ι- en -υ- in de praesensstam: ἀποκτείνω → ἀπέκτεινα, κρίνω → ἔκρινα.</div>
+  <h3>Thematische aoristus</h3>
+  <p>De meeste werkwoorden hebben een sigmatische aoristus. Een groot aantal andere, veelvoorkomende werkwoorden heeft een aoristus met een <em>andere stam</em> dan het praesens. De vervoeging verloopt dan als bij de praesensstam van het type λύω. Omdat de themavocaal -ε/ο optreedt, heet dit de <strong>thematische aoristus</strong> — deze moet je apart aan de stam leren:</p>
+  ${tableHTML(['indicativus','imperativus','infinitivus'],[{label:'1e ev.'},{label:'2e ev.'},{label:'3e ev.'},{label:'1e mv.'},{label:'2e mv.'},{label:'3e mv.'}], (r,c)=>{
+    if(c===0) return ['ἔλαβον','ἔλαβες','ἔλαβε(ν)','ἐλάβομεν','ἐλάβετε','ἔλαβον'][r];
+    if(c===1) return ['','λαβέ','','','λάβετε',''][r];
+    return r===0 ? 'λαβεῖν' : '';
+  }, 'λαμβάνω — nemen (aoristusstam λαβ-)')}
+  `;
+}
+
+/* ---- Hoofdstuk 11 ---- */
+function elC11_TisTis(){
+  return `
+  <h3>τίς en τις</h3>
+  <div class="note">τίς (met accent): 1. wie? 2. welk(e)? — τι (zonder accent): 1. iemand 2. een of ander(e) 3. mv. enkele(n), sommige(n).<br>
+  τί (met accent): 1. wat?, 2. welk(e)?, 3. waarom? — τι (zonder accent): 1. iets, 2. enig(e).</div>
+  ${tableHTML(['τίς/τί mnl./vr.','τίς/τί onz.','τις/τι mnl./vr.','τις/τι onz.'],[
+    {label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}
+  ], (r,c)=>{
+    const a=['τίς','τίνος','τίνι','τίνα','τίνες','τίνων','τίσι(ν)','τίνας'];
+    const b=['τί','τίνος','τίνι','τί','τίνα','τίνων','τίσι(ν)','τίνα'];
+    const cc=['τις','τινος','τινι','τινα','τινες','τινων','τισι(ν)','τινας'];
+    const d=['τι','τινος','τινι','τι','τινα','τινων','τισι(ν)','τινα'];
+    return [a,b,cc,d][c][r];
+  })}
+  `;
+}
+function elC11_ExtraAoristus(){
+  return `
+  <h3>Herhaling: thematische aoristus</h3>
+  <p>Zie Hoofdstuk 10 voor de volledige uitleg — deze les oefent verder met deze aoristusvorm die je apart aan de stam moet herkennen (bijv. λαμβάνω, aoristusstam λαβ-).</p>
+  `;
+}
+
+/* ---- Hoofdstuk 12 ---- */
+function elC12_Trappen(){
+  return `
+  <h3>Comparativus (vergrotende trap)</h3>
+  <p>Op <strong>-τερος</strong>: de comparativus van de meeste bijvoeglijke naamwoorden gaat uit op -τερος, -τέρα, -τερον, bijv. δειλότερος (laffer), en wordt verbogen als μακρός.</p>
+  <p>Op <strong>-(ί)ων</strong>: een aantal veelvoorkomende bijvoeglijke naamwoorden heeft de uitgang -(ί)ων (gen. -ονος) voor mannelijk/vrouwelijk en -(ι)ον voor onzijdig, bijv. βελτίων, βέλτιον (beter) — verbogen als σώφρων.</p>
+  <h3>Superlativus (overtreffende trap)</h3>
+  <p>Op <strong>-τατος</strong>: de superlativus van de meeste bijvoeglijke naamwoorden gaat uit op -τατος, -τάτη, -τατον, bijv. σοφώτατος (wijste, slimste) — verbogen als δεινός.</p>
+  <p>Op <strong>-ιστος</strong>: bijvoeglijke naamwoorden waarvan de comparativus op -(ί)ων uitgaat, hebben een superlativus op -ιστος, -ίστη, -ιστον, bijv. βέλτιστος (beste) — verbogen als δεινός.</p>
+  `;
+}
+function elC12_GebruikTrappen(){
+  return `
+  <h3>Gebruik comparativus</h3>
+  <p><strong>1. In vergelijkingen</strong>: de persoon/zaak waarmee vergeleken wordt, staat na ἤ (dan) óf in de genitivus (zonder ἤ!) — de genitivus comparationis: <em>τίς ἐστι δειλότερος ἢ σύ;</em> wie is er laffer dan jij? / <em>τίς ἐστιν ἀνδρειότερος ἐμοῦ;</em> wie is er dapperder dan ik?<br>
+  <strong>2.</strong> Bij het vergelijken van twee personen/zaken drukt de comparativus de hoogste graad uit: <em>πότερος ἀμείνων ἐστίν;</em> wie van beiden is beter?<br>
+  <strong>3.</strong> Zonder vergelijking vertaal je de comparativus vaak met "nogal", "tamelijk", "al te": <em>ὁ Ὀδυσσεὺς σοφώτερος ἦν</em> Odysseus was nogal slim.</p>
+  <h3>Gebruik superlativus</h3>
+  <p><strong>1. In vergelijkingen</strong>: de persoon/zaak waarmee vergeleken wordt staat vaak in de genitivus: <em>βέλτιστος πάντων Ἀχαιῶν</em> de beste van alle Grieken.<br>
+  <strong>2.</strong> Zonder vergelijking vertaal je de superlativus vaak met "zeer...", "heel...": <em>τοῖς ἀνδρειοτάτοις ἔργοις</em> door zeer/heel dappere daden.<br>
+  <strong>3.</strong> Voorafgegaan door ὡς/ὅτι: "zo... mogelijk": <em>πρόβατα ὡς πλεῖστα</em> zoveel mogelijk schapen.</p>
+  <div class="note">De genitivus bij een comparativus (zonder ἤ) moet je vertalen met "dan": μείζων ἐμοῦ groter dan ik.</div>
+  `;
+}
+function elC12_OnthoudTrappen(){
+  return `
+  <h3>Onregelmatige trappen van vergelijking</h3>
+  <table><thead><tr><th>positief</th><th>comparativus</th><th>superlativus</th></tr></thead><tbody>
+  <tr><td>ἀγαθός (goed)</td><td>ἀμείνων / βελτίων — beter</td><td>ἄριστος / βέλτιστος — best</td></tr>
+  <tr><td>ἰσχυρός (sterk)</td><td>κρείττων — sterker</td><td>κράτιστος — sterkst</td></tr>
+  <tr><td></td><td>ἥττων — zwakker</td><td></td></tr>
+  <tr><td>μέγας (groot)</td><td>μείζων — groter</td><td>μέγιστος — grootst</td></tr>
+  <tr><td>πολύς (veel)</td><td>πλείων / πλέον — meer</td><td>πλεῖστος — meest</td></tr>
+  <tr><td>κακός (slecht)</td><td>κακίων — slechter</td><td>κάκιστος — slechtst</td></tr>
+  <tr><td>καλός (mooi)</td><td>καλλίων — mooier</td><td>κάλλιστος — mooist</td></tr>
+  </tbody></table>
+  ${tableHTML(['mnl./vrl.','onz.'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const mv=['βελτίων','βελτίονος','βελτίονι','βελτίονα','βελτίονες','βελτιόνων','βελτίοσι(ν)','βελτίονας'];
+    const onz=['βέλτιον','βελτίονος','βελτίονι','βέλτιον','βελτίονα','βελτιόνων','βελτίοσι(ν)','βελτίονα'];
+    return c===0?mv[r]:onz[r];
+  }, 'βελτίων, βελτίονος — beter')}
+  <div class="note">σοφώτερος betekent 1. wijzer, 2. nogal/tamelijk wijs, 3. te wijs, 4. 't wijst (van twee). σοφώτατος betekent 1. wijst, 2. zeer/heel wijs, 3. (ὡς/ὅτι σοφώτατος) zo wijs mogelijk.</div>
+  `;
+}
+
+/* ---- Hoofdstuk 13 ---- */
+function elC13_Aanwijzend(){
+  return `
+  <h3>Aanwijzende voornaamwoorden</h3>
+  <p>Het Grieks kent drie aanwijzende voornaamwoorden: ὅδε (deze), οὗτος (deze, die) en ἐκεῖνος (die). Ze kunnen zowel zelfstandig ("los") als bijvoeglijk gebruikt worden.</p>
+  <p><strong>Bijvoeglijk gebruik</strong>: komen overeen in geslacht, getal en naamval met het zelfstandig naamwoord, en staan vóór lidwoord + zelfstandig naamwoord of erachter.<br>
+  <strong>Zelfstandig gebruik</strong>: als persoonlijk voornaamwoord van de 3e persoon.</p>
+  <p>ὅδε, ἥδε, τόδε (1. deze, 2. hij/zij/dit hier) wordt verbogen als het lidwoord + δε. οὗτος, αὕτη, τοῦτο (1. deze/die, 2. hij/zij/dat hier/daar) — let op: een τ wordt toegevoegd waar ook het lidwoord met τ begint; bij een o-klank is de stam ουτ, bij een α/η-klank is de stam αυτ. ἐκεῖνος, ἐκείνη, ἐκεῖνο (die, hij/zij/dat daar) wordt verbogen als δεινός, met uitzondering van nom./acc. onzijdig enkelvoud: -ο i.p.v. -ον.</p>
+  ${tableHTML(['ὅδε mnl.','ἥδε vrl.','τόδε onz.'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const m=['ὅδε','τοῦδε','τῷδε','τόνδε','οἵδε','τῶνδε','τοῖσδε','τούσδε'];
+    const f=['ἥδε','τῆσδε','τῇδε','τήνδε','αἵδε','τῶνδε','ταῖσδε','τάσδε'];
+    const n=['τόδε','τοῦδε','τῷδε','τόδε','τάδε','τῶνδε','τοῖσδε','τάδε'];
+    return [m,f,n][c][r];
+  })}
+  ${tableHTML(['οὗτος mnl.','αὕτη vrl.','τοῦτο onz.'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const m=['οὗτος','τούτου','τούτῳ','τοῦτον','οὗτοι','τούτων','τούτοις','τούτους'];
+    const f=['αὕτη','ταύτης','ταύτῃ','ταύτην','αὗται','τούτων','ταύταις','ταύτας'];
+    const n=['τοῦτο','τούτου','τούτῳ','τοῦτο','ταῦτα','τούτων','τούτοις','ταῦτα'];
+    return [m,f,n][c][r];
+  })}
+  ${tableHTML(['ἐκεῖνος mnl.','ἐκείνη vrl.','ἐκεῖνο onz.'],[{label:'nom. ev.'},{label:'gen.'},{label:'dat.'},{label:'acc.'},{label:'nom. mv.'},{label:'gen.'},{label:'dat.'},{label:'acc.'}], (r,c)=>{
+    const m=['ἐκεῖνος','ἐκείνου','ἐκείνῳ','ἐκεῖνον','ἐκεῖνοι','ἐκείνων','ἐκείνοις','ἐκείνους'];
+    const f=['ἐκείνη','ἐκείνης','ἐκείνῃ','ἐκείνην','ἐκεῖναι','ἐκείνων','ἐκείναις','ἐκείνας'];
+    const n=['ἐκεῖνο','ἐκείνου','ἐκείνῳ','ἐκεῖνο','ἐκεῖνα','ἐκείνων','ἐκείνοις','ἐκεῖνα'];
+    return [m,f,n][c][r];
+  })}
+  <div class="note">τόδε/τάδε verwijst meestal naar woorden die vólgen: "het volgende". τοῦτο/ταῦτα verwijst meestal naar woorden die in het voorafgaande zijn gezegd.</div>
+  <div class="note">αὕτη/αὗται ("deze/die") kun je makkelijk verwarren met αὐτή/αὐταί ("zelf"): αὕτη/αὗται hebben het accent altijd op de eerste lettergreep, αὐτή/αὐταί altijd op de laatste — en er is ook verschil in spiritus.</div>
+  `;
+}
+function elC13_ACI(){
+  return `
+  <h3>Accusativus cum Infinitivo (A.c.I.)</h3>
+  <p>Vergelijk: <em>οὐ γιγνώσκετε ὅτι οἱ Ἀχαιοὶ ἄπιστοί εἰσιν;</em> (met ὅτι-zin) en <em>οὐ γιγνώσκετε τοὺς Ἀχαιοὺς ἀπίστους εἶναι;</em> (met A.c.I.) — begrijpen jullie niet dat de Grieken onbetrouwbaar zijn? In de A.c.I.-zin is τοὺς Ἀχαιούς accusativus en onderwerp van de infinitivus εἶναι.</p>
+  <p>De A.c.I. wordt gebruikt als alternatief voor de ὅτι-zin bij werkwoorden die "zeggen", "menen", "horen" e.d. betekenen. Het onderwerp van de infinitivus is <strong>niet gelijk</strong> aan het onderwerp van de persoonsvorm en staat altijd in de accusativus.</p>
+  <h3>A.c.I. bij onpersoonlijke uitdrukkingen</h3>
+  <p>Bij sommige onpersoonlijke uitdrukkingen wordt de A.c.I. als geheel als onderwerp gebruikt: <em>οὐ χρὴ ὑμᾶς ἕλκειν τὸν ἵππον</em> het is niet nodig dat jullie het paard slepen = jullie moeten het paard niet slepen. <em>δῆλόν ἐστι τὸν ἵππον κακὰ φέρειν</em> het is duidelijk dat het paard ellende meebrengt.</p>
+  <h3>Subjectsaccusativus en objectsaccusativus</h3>
+  <p>In een zin als <em>δῆλόν ἐστι τὸν ἵππον πολλὰ κακὰ ὑμῖν φέρειν</em> staan twee accusativi: τὸν ἵππον (subjectsaccusativus, onderwerp van φέρειν) en πολλὰ κακά (objectsaccusativus, lijdend voorwerp van φέρειν).</p>
+  <h3>Infinitivi in de A.c.I.</h3>
+  <p>Let op of een infinitivus van het praesens of van de aoristus wordt gebruikt:<br>
+  <strong>a. Praesens-infinitivus</strong>: gelijktijdig met de persoonsvorm — <em>ἆρ' οὐ γιγνώσκετε ἐκείνους ἀπιστοτάτους εἶναι;</em> begrijpen jullie niet dat zij zeer onbetrouwbaar zíjn?<br>
+  <strong>b. Aoristus-infinitivus</strong>: voortijdig (eerder dan de persoonsvorm) — <em>ἆρ' οὐ γιγνώσκετε τοὺς Ἀχαιοὺς τὸν ἵππον δόλῳ δεῦρο ἀγαγεῖν;</em> begrijpen jullie niet dat de Grieken het paard met list hierheen híjbben gebracht?</p>
+  `;
+}
+
+/* ---- Koppeling: welke onderwerpen staan na welke Tekst-letter ---- */
+/* ---- Generieke oefen-helpers voor vormen (declinatie/vervoeging) ---- */
+const PERSON_LABEL_EL = ['ik','jij','hij/zij/het','wij','jullie','zij'];
+
+function elDeclOefenen(words, title){
+  const cats = { one: { title: title||'Vormen', sub:'', words, forms: (w)=>w.forms } };
+  return renderOefenCategoryPicker(cats, (word, formKey)=>{
+    const caseKey = formKey.slice(0,3); const number = formKey.slice(3);
+    return `Wat is de vorm in de <strong>${EL_CASE_LABEL[caseKey]} ${NUM_LABEL[number]}</strong> van <span class="w">${word.gr}</span> (${word.nl})?`;
+  }, (w)=>w.gr, (word, formKey)=>{
+    const caseKey = formKey.slice(0,3); const number = formKey.slice(3);
+    return `${EL_CASE_LABEL[caseKey]} ${NUM_LABEL[number]}`;
+  }, undefined, undefined, 'EL');
+}
+function elConjOefenen(verbs, title){
+  const cats = { one: { title: title||'Vervoeging', sub:'', words: verbs, forms: (w)=>w.forms } };
+  return renderOefenCategoryPicker(cats, (word, formKey)=>{
+    const p = +formKey.slice(1);
+    return `Wat is de vorm voor <strong>${PERSON_LABEL_EL[p]}</strong> van <span class="w">${word.gr}</span> (${word.nl})?`;
+  }, (w)=>w.gr, (word, formKey)=>{
+    const p = +formKey.slice(1);
+    return PERSON_LABEL_EL[p];
+  }, undefined, undefined, 'EL');
+}
+
+/* ---- Extra vormdata voor oefeningen ---- */
+const EL_ADJ_DEINOS = { gr:'δεινός', nl:'verschrikkelijk, geducht', forms:{nomSg:'δεινός',genSg:'δεινοῦ',datSg:'δεινῷ',accSg:'δεινόν',nomPl:'δεινοί',genPl:'δεινῶν',datPl:'δεινοῖς',accPl:'δεινούς'} };
+const EL_ADJ_DEINE = { gr:'δεινή (vrl.)', nl:'verschrikkelijk, geducht', forms:{nomSg:'δεινή',genSg:'δεινῆς',datSg:'δεινῇ',accSg:'δεινήν',nomPl:'δειναί',genPl:'δεινῶν',datPl:'δειναῖς',accPl:'δεινάς'} };
+const EL_ADJ_MAKROS = { gr:'μακρός', nl:'lang', forms:{nomSg:'μακρός',genSg:'μακροῦ',datSg:'μακρῷ',accSg:'μακρόν',nomPl:'μακροί',genPl:'μακρῶν',datPl:'μακροῖς',accPl:'μακρούς'} };
+
+const EL_VERB_LYO = { gr:'λύω', nl:'losmaken', forms:{p0:'λύω',p1:'λύεις',p2:'λύει',p3:'λύομεν',p4:'λύετε',p5:'λύουσι(ν)'} };
+const EL_VERB_POIEO = { gr:'ποιέω', nl:'doen, maken', forms:{p0:'ποιῶ',p1:'ποιεῖς',p2:'ποιεῖ',p3:'ποιοῦμεν',p4:'ποιεῖτε',p5:'ποιοῦσι(ν)'} };
+const EL_VERB_EIMI = { gr:'εἰμί', nl:'zijn', forms:{p0:'εἰμί',p1:'εἶ',p2:'ἐστί(ν)',p3:'ἐσμέν',p4:'ἐστέ',p5:'εἰσί(ν)'} };
+const EL_VERB_LYO_IMPF = { gr:'ἔλυον (imperf.)', nl:'ik maakte los', forms:{p0:'ἔλυον',p1:'ἔλυες',p2:'ἔλυε(ν)',p3:'ἐλύομεν',p4:'ἐλύετε',p5:'ἔλυον'} };
+const EL_VERB_POIEO_IMPF = { gr:'ἐποίουν (imperf.)', nl:'ik deed, maakte', forms:{p0:'ἐποίουν',p1:'ἐποίεις',p2:'ἐποίει',p3:'ἐποιοῦμεν',p4:'ἐποιεῖτε',p5:'ἐποίουν'} };
+const EL_VERB_EIMI_IMPF = { gr:'ἦν (imperf.)', nl:'ik was', forms:{p0:'ἦ(ν)',p1:'ἦσθα',p2:'ἦν',p3:'ἦμεν',p4:'ἦτε',p5:'ἦσαν'} };
+const EL_VERB_LYO_AOR = { gr:'ἔλυσα (aoristus)', nl:'ik maakte los', forms:{p0:'ἔλυσα',p1:'ἔλυσας',p2:'ἔλυσε(ν)',p3:'ἐλύσαμεν',p4:'ἐλύσατε',p5:'ἔλυσαν'} };
+
+const EL_PERS_VNW_1 = { gr:'ἐγώ / ἡμεῖς', nl:'ik / wij', forms:{nomSg:'ἐγώ',genSg:'ἐμοῦ',datSg:'ἐμοί',accSg:'ἐμέ',nomPl:'ἡμεῖς',genPl:'ἡμῶν',datPl:'ἡμῖν',accPl:'ἡμᾶς'} };
+const EL_PERS_VNW_2 = { gr:'σύ / ὑμεῖς', nl:'jij / jullie', forms:{nomSg:'σύ',genSg:'σοῦ',datSg:'σοί',accSg:'σέ',nomPl:'ὑμεῖς',genPl:'ὑμῶν',datPl:'ὑμῖν',accPl:'ὑμᾶς'} };
+const EL_AUTOS_M = { gr:'αὐτός (mnl.)', nl:'hij / hem', forms:{genSg:'αὐτοῦ',datSg:'αὐτῷ',accSg:'αὐτόν',genPl:'αὐτῶν',datPl:'αὐτοῖς',accPl:'αὐτούς'} };
+const EL_AUTOS_F = { gr:'αὐτή (vrl.)', nl:'zij / haar', forms:{genSg:'αὐτῆς',datSg:'αὐτῇ',accSg:'αὐτήν',genPl:'αὐτῶν',datPl:'αὐταῖς',accPl:'αὐτάς'} };
+
+const EL_MEGAS = { gr:'μέγας (mnl.)', nl:'groot', forms:{nomSg:'μέγας',genSg:'μεγάλου',datSg:'μεγάλῳ',accSg:'μέγαν',nomPl:'μεγάλοι',genPl:'μεγάλων',datPl:'μεγάλοις',accPl:'μεγάλους'} };
+const EL_POLYS = { gr:'πολύς (mnl.)', nl:'veel', forms:{nomSg:'πολύς',genSg:'πολλοῦ',datSg:'πολλῷ',accSg:'πολύν',nomPl:'πολλοί',genPl:'πολλῶν',datPl:'πολλοῖς',accPl:'πολλούς'} };
+
+const EL_SOTER = { gr:'σωτήρ', nl:'redder', forms:{nomSg:'σωτήρ',genSg:'σωτῆρος',datSg:'σωτῆρι',accSg:'σωτῆρα',nomPl:'σωτῆρες',genPl:'σωτήρων',datPl:'σωτῆρσι(ν)',accPl:'σωτῆρας'} };
+const EL_GYNE = { gr:'γυνή', nl:'vrouw', forms:{nomSg:'γυνή',genSg:'γυναικός',datSg:'γυναικί',accSg:'γυναῖκα',nomPl:'γυναῖκες',genPl:'γυναικῶν',datPl:'γυναιξί(ν)',accPl:'γυναῖκας'} };
+const EL_LEON = { gr:'λέων', nl:'leeuw', forms:{nomSg:'λέων',genSg:'λέοντος',datSg:'λέοντι',accSg:'λέοντα',nomPl:'λέοντες',genPl:'λεόντων',datPl:'λέουσι(ν)',accPl:'λέοντας'} };
+const EL_PATER = { gr:'πατήρ', nl:'vader', forms:{nomSg:'πατήρ',genSg:'πατρός',datSg:'πατρί',accSg:'πατέρα',nomPl:'πατέρες',genPl:'πατέρων',datPl:'πατράσι(ν)',accPl:'πατέρας'} };
+const EL_SOMA = { gr:'σῶμα', nl:'lichaam', forms:{nomSg:'σῶμα',genSg:'σώματος',datSg:'σώματι',accSg:'σῶμα',nomPl:'σώματα',genPl:'σωμάτων',datPl:'σώμασι(ν)',accPl:'σώματα'} };
+const EL_SOFRON = { gr:'σώφρων', nl:'verstandig', forms:{nomSg:'σώφρων',genSg:'σώφρονος',datSg:'σώφρονι',accSg:'σώφρονα',nomPl:'σώφρονες',genPl:'σωφρόνων',datPl:'σώφροσι(ν)',accPl:'σώφρονας'} };
+const EL_PAS = { gr:'πᾶς (mnl.)', nl:'ieder, geheel, alle(n)', forms:{nomSg:'πᾶς',genSg:'παντός',datSg:'παντί',accSg:'πάντα',nomPl:'πάντες',genPl:'πάντων',datPl:'πᾶσι(ν)',accPl:'πάντας'} };
+
+const EL_BELTION = { gr:'βελτίων', nl:'beter', forms:{nomSg:'βελτίων',genSg:'βελτίονος',datSg:'βελτίονι',accSg:'βελτίονα',nomPl:'βελτίονες',genPl:'βελτιόνων',datPl:'βελτίοσι(ν)',accPl:'βελτίονας'} };
+
+const EL_TIS = { gr:'τίς / τί', nl:'wie? / wat?', forms:{nomSg:'τίς',genSg:'τίνος',datSg:'τίνι',accSg:'τίνα',nomPl:'τίνες',genPl:'τίνων',datPl:'τίσι(ν)',accPl:'τίνας'} };
+
+const EL_HODE = { gr:'ὅδε (mnl.)', nl:'deze', forms:{nomSg:'ὅδε',genSg:'τοῦδε',datSg:'τῷδε',accSg:'τόνδε',nomPl:'οἵδε',genPl:'τῶνδε',datPl:'τοῖσδε',accPl:'τούσδε'} };
+const EL_HOUTOS = { gr:'οὗτος (mnl.)', nl:'deze, die', forms:{nomSg:'οὗτος',genSg:'τούτου',datSg:'τούτῳ',accSg:'τοῦτον',nomPl:'οὗτοι',genPl:'τούτων',datPl:'τούτοις',accPl:'τούτους'} };
+const EL_EKEINOS = { gr:'ἐκεῖνος (mnl.)', nl:'die (daar)', forms:{nomSg:'ἐκεῖνος',genSg:'ἐκείνου',datSg:'ἐκείνῳ',accSg:'ἐκεῖνον',nomPl:'ἐκεῖνοι',genPl:'ἐκείνων',datPl:'ἐκείνοις',accPl:'ἐκείνους'} };
+
+const EL_LYO_TABLE = { gr:'λύω / ποιέω / εἰμί', nl:'praesens', forms:{p0:'λύω',p1:'λύεις',p2:'λύει',p3:'λύομεν',p4:'λύετε',p5:'λύουσι(ν)'} };
+
+/* ---- Meerkeuzevragen voor regel-/gebruiksonderwerpen ---- */
+const EL_MC_NAAMVALLEN = [
+  { q:'In "ὁ δοῦλος ἔχει φόβον" (de slaaf heeft angst) — welke functie heeft δοῦλος?', options:['onderwerp (nominativus)','lijdend voorwerp (accusativus)','bezitter (genitivus)'], correct:'onderwerp (nominativus)' },
+  { q:'In "Εὐρυσθεὺς δοῦλον ἔχει" (Eurystheus heeft een slaaf) — welke functie heeft δοῦλον?', options:['onderwerp (nominativus)','lijdend voorwerp (accusativus)','meewerkend voorwerp (dativus)'], correct:'lijdend voorwerp (accusativus)' },
+  { q:'"Ἡρακλῆς δοῦλός ἐστιν" (Herakles is slaaf) — welke functie heeft δοῦλός hier?', options:['naamwoordelijk deel van het gezegde','lijdend voorwerp','bijvoeglijke bepaling'], correct:'naamwoordelijk deel van het gezegde' },
+  { q:'Hoeveel naamvallen kent het Grieks?', options:['vier','vijf','zes'], correct:'vijf' }
+];
+const EL_MC_GebrLidwoord = [
+  { q:'Hoe vertaal je een zelfstandig naamwoord meestal als er géén lidwoord bij staat?', options:['met "een"','met "de/het"','helemaal niet'], correct:'met "een"' },
+  { q:'"ὁ Ἡρακλῆς τὸ τόξον φέρει" — hoe vertaal je τὸ τόξον hier het best?', options:['een boog','zijn boog','de boog van iemand anders'], correct:'zijn boog' },
+  { q:'Bij welk zinsdeel ontbreekt het lidwoord meestal?', options:['het onderwerp','het naamwoordelijk deel van het gezegde','het lijdend voorwerp'], correct:'het naamwoordelijk deel van het gezegde' },
+  { q:'Heeft het Grieks een onbepaald lidwoord (zoals "een" in het Nederlands)?', options:['ja, τι','nee','alleen in het meervoud'], correct:'nee' }
+];
+const EL_MC_GebrBijvNw = [
+  { q:'"τὸ δεινὸν θηρίον" — waar staat het bijvoeglijk naamwoord?', options:['tussen lidwoord en zelfstandig naamwoord','vóór het lidwoord','na het hele zinsdeel, los'], correct:'tussen lidwoord en zelfstandig naamwoord' },
+  { q:'Als naamwoordelijk deel van het gezegde past het bijvoeglijk naamwoord zich aan in naamval en...?', options:['geslacht','tijd','stam'], correct:'geslacht' },
+  { q:'ἀθάνατος bestaat uit ἀ- (on-) + welk deel?', options:['θάνατος (dood)','ἄνθρωπος (mens)','νοῦς (geest)'], correct:'θάνατος (dood)' },
+  { q:'Samengestelde bijvoeglijke naamwoorden op -ος hebben...', options:['een aparte vrouwelijke uitgang','geen aparte vrouwelijke uitgang','alleen een vrouwelijke uitgang'], correct:'geen aparte vrouwelijke uitgang' }
+];
+const EL_MC_NietVeranderen = [
+  { q:'μετά + genitivus betekent?', options:['samen met','na','tegen'], correct:'samen met' },
+  { q:'εἰς + accusativus betekent?', options:['vanuit','naar, naar binnen, tot','bij, in de buurt van'], correct:'naar, naar binnen, tot' },
+  { q:'Voorzetsels en bijwoorden veranderen nooit van vorm. Welke derde soort ook niet?', options:['partikels','werkwoorden','bijvoeglijke naamwoorden'], correct:'partikels' },
+  { q:'Het partikel δέ betekent meestal?', options:['en/maar (vaak onvertaald)','dus, daarom','misschien'], correct:'en/maar (vaak onvertaald)' }
+];
+const EL_MC_WerkwPredicatief = [
+  { q:'Als het onderwerp een onzijdig meervoud is, staat het werkwoord meestal in het...?', options:['enkelvoud','meervoud','zowel enkelvoud als meervoud'], correct:'enkelvoud' },
+  { q:'"ὁ Θησεὺς μόνος τὸν Μινώταυρον ζητεῖ" — wat voor gebruik is μόνος hier?', options:['predicatief','als bijvoeglijke bepaling met lidwoord','als naamwoordelijk deel bij "zijn"'], correct:'predicatief' },
+  { q:'Staat er een lidwoord vóór een predicatief gebruikt bijvoeglijk naamwoord?', options:['ja, altijd','nee','alleen in het meervoud'], correct:'nee' },
+  { q:'"τὰ τέκνα δακρύει" (de kinderen huilen) — waarom staat δακρύει in het enkelvoud?', options:['het onderwerp is onzijdig meervoud','het is een uitzonderingswerkwoord','τέκνα is eigenlijk enkelvoud'], correct:'het onderwerp is onzijdig meervoud' }
+];
+const EL_MC_Autos = [
+  { q:'αὐτός bij een zelfstandig naamwoord (zónder lidwoord ervoor) betekent?', options:['zelf','dezelfde','hij/hem'], correct:'zelf' },
+  { q:'Lidwoord + αὐτός (bijv. ἡ αὐτή) betekent?', options:['zelf','dezelfde / hetzelfde','geen van beide'], correct:'dezelfde / hetzelfde' },
+  { q:'De nominativus van αὐτός (αὐτός, αὐτή, αὐτό) betekent altijd?', options:['zelf','hem/haar/het','dezelfde'], correct:'zelf' },
+  { q:'"ἐγὼ αὐτός" betekent?', options:['ik zelf','dezelfde ik','mijzelf (lijdend voorwerp)'], correct:'ik zelf' }
+];
+const EL_MC_AugmentBeginklinker = [
+  { q:'ἀκούω (begint met α) krijgt in het imperfectum welke beginklinker?', options:['η','ω','blijft α'], correct:'η' },
+  { q:'Een werkwoord dat al begint met ω, blijft in het imperfectum?', options:['ω','η','α'], correct:'ω' },
+  { q:'Wat is de bekende uitzondering op de augmentregel bij beginklinker?', options:['ἔχω → εἶχον','ἀκούω → ἤκουον','ὁμολογέω → ὡμολόγουν'], correct:'ἔχω → εἶχον' },
+  { q:'εὑρίσκω (begint met ευ) wordt in het imperfectum?', options:['ηὑρισκον','ωὑρισκον','blijft ευ-'], correct:'ηὑρισκον' }
+];
+const EL_MC_AugmentSamengesteld = [
+  { q:'Bij een samengesteld werkwoord (met voorzetsel) staat het augment?', options:['vóór het voorzetsel','achter het voorzetsel','er komt geen augment'], correct:'achter het voorzetsel' },
+  { q:'ἀναβαίνω wordt in het imperfectum?', options:['ἀνέβαινον','ἠνάβαινον','ἀναέβαινον'], correct:'ἀνέβαινον' },
+  { q:'Het praesens historicum wordt gebruikt om?', options:['een ooggetuigen-effect te geven op een belangrijk moment','de toekomst aan te duiden','een gewoonte te beschrijven'], correct:'een ooggetuigen-effect te geven op een belangrijk moment' },
+  { q:'Bij welk voorzetsel is er een uitzondering op de augmentplaatsing?', options:['περί','ἐπί','κατά'], correct:'περί' }
+];
+const EL_MC_AoristusMedeklinker = [
+  { q:'βλέπω (stam op π) krijgt in de aoristus welke combinatie vóór de uitgang?', options:['ψ','ξ','σ'], correct:'ψ' },
+  { q:'διώκω (stam op κ) krijgt in de aoristus welke combinatie?', options:['ψ','ξ','σ'], correct:'ξ' },
+  { q:'νομίζω (stam op ζ, dus eigenlijk δ) — wat gebeurt er met die medeklinker in de aoristus?', options:['die verdwijnt (alleen σ blijft)','die wordt ξ','die wordt ψ'], correct:'die verdwijnt (alleen σ blijft)' },
+  { q:'Een aoristusvorm stelt een handeling voor als?', options:['afgesloten','nog bezig','een gewoonte'], correct:'afgesloten' }
+];
+const EL_MC_PseudoThematisch = [
+  { q:'Welke medeklinkers geven een pseudo-sigmatische (in plaats van sigmatische) aoristus?', options:['μ, λ, ν, ρ','π, β, φ','κ, γ, χ'], correct:'μ, λ, ν, ρ' },
+  { q:'Bij een pseudo-sigmatische aoristus ontbreekt de?', options:['σ','uitgang','stam'], correct:'σ' },
+  { q:'λαμβάνω heeft in de aoristus de (heel andere) stam?', options:['λαβ-','λαμβ-','ληβ-'], correct:'λαβ-' },
+  { q:'Een thematische aoristus herken je aan?', options:['een heel andere stam dan het praesens','de -σα-uitgang','het ontbreken van een augment'], correct:'een heel andere stam dan het praesens' }
+];
+const EL_MC_ExtraAoristus = [
+  { q:'λαμβάνω → wat is de aoristusstam?', options:['λαβ-','λαμβ-','λημ-'], correct:'λαβ-' },
+  { q:'De themavocaal in een thematische aoristus is?', options:['-ε/ο-','-σα-','-θη-'], correct:'-ε/ο-' },
+  { q:'ἔλαβον kan betekenen?', options:['ik nam / zij namen','ik neem','ik zal nemen'], correct:'ik nam / zij namen' }
+];
+const EL_MC_TrappenVorming = [
+  { q:'De comparativus van de meeste bijvoeglijke naamwoorden gaat uit op?', options:['-τερος','-τατος','-ιστος'], correct:'-τερος' },
+  { q:'De superlativus van de meeste bijvoeglijke naamwoorden gaat uit op?', options:['-τερος','-τατος','-ίων'], correct:'-τατος' },
+  { q:'βελτίων, βέλτιον wordt verbogen als?', options:['σώφρων','δεινός','μακρός'], correct:'σώφρων' },
+  { q:'Bijvoeglijke naamwoorden met comparativus op -(ί)ων hebben een superlativus op?', options:['-ιστος','-τατος','-τερος'], correct:'-ιστος' }
+];
+const EL_MC_TrappenGebruik = [
+  { q:'De vergeleken persoon/zaak staat na ἤ of in de?', options:['genitivus (comparationis)','dativus','accusativus'], correct:'genitivus (comparationis)' },
+  { q:'Zonder vergelijking vertaal je de superlativus vaak met?', options:['zeer/heel...','minder dan...','net zo...'], correct:'zeer/heel...' },
+  { q:'ὡς/ὅτι + superlativus (bijv. ὡς πλεῖστα) betekent?', options:['zo ... mogelijk','helemaal niet','net als vroeger'], correct:'zo ... mogelijk' },
+  { q:'Een comparativus-genitivus zónder ἤ vertaal je met?', options:['dan','en','of'], correct:'dan' }
+];
+const EL_MC_ACI = [
+  { q:'Bij een A.c.I. staat het onderwerp van de infinitivus in de?', options:['accusativus','nominativus','genitivus'], correct:'accusativus' },
+  { q:'De A.c.I. wordt gebruikt als alternatief voor de?', options:['ὅτι-zin','εἰ-zin','hoofdzin'], correct:'ὅτι-zin' },
+  { q:'Een praesens-infinitivus in de A.c.I. is ten opzichte van de persoonsvorm?', options:['gelijktijdig','voortijdig','na-tijdig'], correct:'gelijktijdig' },
+  { q:'Een aoristus-infinitivus in de A.c.I. is ten opzichte van de persoonsvorm?', options:['gelijktijdig','voortijdig (eerder)','na-tijdig (later)'], correct:'voortijdig (eerder)' }
+];
+
+const EL_TOPICS_BY_HST = {
+  '3': [
+    { after:'A', title:'Zelfstandige naamwoorden & naamvallen', richLeren: elC3_Naamvallen, richOefenen: ()=>renderMcQuiz(EL_MC_NAAMVALLEN,'Naamvallen') },
+    { after:'B', title:'Het lidwoord', richLeren: elC3_Lidwoord, richOefenen: elC3_LidwoordOefenen },
+    { after:'B', title:'α/η-groep en o-groep', richLeren: elC3_Groepen, richOefenen: elC3_GroepenOefenen },
+    { after:'C', title:'Gebruik van het lidwoord', richLeren: elC3_GebruikLidwoord, richOefenen: ()=>renderMcQuiz(EL_MC_GebrLidwoord,'Gebruik lidwoord') }
+  ],
+  '4': [
+    { after:'A', title:'Werkwoorden (3e persoon)', richLeren: elC4_Werkwoorden, richOefenen: elC4_WerkwoordenOefenen },
+    { after:'B', title:'Bijvoeglijke naamwoorden', richLeren: elC4_BijvNw, richOefenen: ()=>elDeclOefenen([EL_ADJ_DEINOS,EL_ADJ_DEINE,EL_ADJ_MAKROS], 'Bijvoeglijke naamwoorden') },
+    { after:'C', title:'Gebruik bijvoeglijk naamwoord', richLeren: elC4_GebruikBijvNw, richOefenen: ()=>renderMcQuiz(EL_MC_GebrBijvNw,'Gebruik bijv. naamwoord') }
+  ],
+  '5': [
+    { after:'A', title:'Genitivus', richLeren: elC5_Genitivus, richOefenen: ()=>elDeclOefenen(EL_DECL_WORDS, 'Genitivus & alle naamvallen') },
+    { after:'B', title:'Dativus', richLeren: elC5_Dativus, richOefenen: ()=>elDeclOefenen(EL_DECL_WORDS, 'Dativus & alle naamvallen') },
+    { after:'C', title:'Woorden die niet veranderen', richLeren: elC5_WoordenNietVeranderen, richOefenen: ()=>renderMcQuiz(EL_MC_NietVeranderen,'Woorden die niet veranderen') }
+  ],
+  '6': [
+    { after:'A', title:'Werkwoorden: infinitivus & praesens', richLeren: elC6_Werkwoorden, richOefenen: ()=>elConjOefenen([EL_VERB_LYO,EL_VERB_POIEO,EL_VERB_EIMI], 'Praesens λύω/ποιέω/εἰμί') },
+    { after:'B', title:'Werkwoorden & predicatief', richLeren: elC6_WerkwoordenB, richOefenen: ()=>renderMcQuiz(EL_MC_WerkwPredicatief,'Werkwoorden & predicatief') },
+    { after:'C', title:'Persoonlijk voornaamwoord & woordvolgorde', richLeren: elC6_PersVoornaamwoord, richOefenen: ()=>elDeclOefenen([EL_PERS_VNW_1,EL_PERS_VNW_2], 'Persoonlijk voornaamwoord') }
+  ],
+  '7': [
+    { after:'A', title:'μέγας, πολύς & vrouwelijke -ος woorden', richLeren: elC7_MegasPolys, richOefenen: ()=>elDeclOefenen([EL_MEGAS,EL_POLYS], 'μέγας & πολύς') },
+    { after:'B', title:'Persoonlijk voornaamwoord 3e persoon', richLeren: elC7_PersVoornaamwoord3e, richOefenen: ()=>elDeclOefenen([EL_AUTOS_M,EL_AUTOS_F], 'αὐτός') },
+    { after:'C', title:'Gebruik αὐτός', richLeren: elC7_Autos, richOefenen: ()=>renderMcQuiz(EL_MC_Autos,'Gebruik αὐτός') }
+  ],
+  '8': [
+    { after:'A', title:'Het imperfectum & augment', richLeren: elC8_Imperfectum, richOefenen: ()=>elConjOefenen([EL_VERB_LYO_IMPF,EL_VERB_POIEO_IMPF,EL_VERB_EIMI_IMPF], 'Imperfectum') },
+    { after:'B', title:'Augment bij beginklinker', richLeren: elC8_AugmentBeginklinker, richOefenen: ()=>renderMcQuiz(EL_MC_AugmentBeginklinker,'Augment bij beginklinker') },
+    { after:'C', title:'Augment samengesteld & praesens historicum', richLeren: elC8_AugmentSamengesteld, richOefenen: ()=>renderMcQuiz(EL_MC_AugmentSamengesteld,'Augment & praesens historicum') }
+  ],
+  '9': [
+    { after:'A', title:'Zelfstandig naamwoord: medeklinkergroep', richLeren: elC9_Medeklinkergroep, richOefenen: ()=>elDeclOefenen([EL_SOTER,EL_GYNE,EL_LEON,EL_PATER,EL_SOMA,EL_SOFRON,EL_PAS], 'Medeklinkergroep') },
+    { after:'B', title:'Gemengde groep & voornaamwoorden', richLeren: elC9_GemengdBijvNw, richOefenen: ()=>elDeclOefenen([EL_PERS_VNW_1,EL_PERS_VNW_2], 'Persoonlijk voornaamwoord') }
+  ],
+  '10': [
+    { after:'A', title:'De aoristus (sigmatisch)', richLeren: elC10_Aoristus, richOefenen: ()=>elConjOefenen([EL_VERB_LYO_AOR], 'Sigmatische aoristus') },
+    { after:'B', title:'Aoristus bij medeklinkerstam', richLeren: elC10_AoristusMedeklinker, richOefenen: ()=>renderMcQuiz(EL_MC_AoristusMedeklinker,'Aoristus bij medeklinkerstam') },
+    { after:'C', title:'Pseudo-sigmatische & thematische aoristus', richLeren: elC10_PseudoSigmatisch, richOefenen: ()=>renderMcQuiz(EL_MC_PseudoThematisch,'Pseudo-sigmatische aoristus') }
+  ],
+  '11': [
+    { after:'A', title:'Thematische aoristus (herhaling)', richLeren: elC11_ExtraAoristus, richOefenen: ()=>renderMcQuiz(EL_MC_ExtraAoristus,'Thematische aoristus') },
+    { after:'B', title:'τίς en τις', richLeren: elC11_TisTis, richOefenen: ()=>elDeclOefenen([EL_TIS], 'τίς / τί') }
+  ],
+  '12': [
+    { after:'A', title:'Trappen van vergelijking: vorming', richLeren: elC12_Trappen, richOefenen: ()=>renderMcQuiz(EL_MC_TrappenVorming,'Trappen: vorming') },
+    { after:'B', title:'Gebruik trappen van vergelijking', richLeren: elC12_GebruikTrappen, richOefenen: ()=>renderMcQuiz(EL_MC_TrappenGebruik,'Trappen: gebruik') },
+    { after:'C', title:'Onregelmatige trappen van vergelijking', richLeren: elC12_OnthoudTrappen, richOefenen: ()=>elDeclOefenen([EL_BELTION], 'βελτίων — beter') }
+  ],
+  '13': [
+    { after:'A', title:'Aanwijzende voornaamwoorden', richLeren: elC13_Aanwijzend, richOefenen: ()=>elDeclOefenen([EL_HODE,EL_HOUTOS,EL_EKEINOS], 'Aanwijzende voornaamwoorden') },
+    { after:'B', title:'Accusativus cum Infinitivo', richLeren: elC13_ACI, richOefenen: ()=>renderMcQuiz(EL_MC_ACI,'Accusativus cum Infinitivo') }
+  ]
+};
+
 
 function elAlfabetLeren(){
   const wrapId = 'elleren-' + Math.random().toString(36).slice(2,8);
@@ -5606,13 +6390,6 @@ function initElAlfabetLeren(wrapId){
   });
 }
 
-function elVocabOefenen(){
-  const cats = {};
-  EL_VOCAB.forEach((chap, i)=>{
-    cats['hst'+i] = { title: chap.title, sub: 'Grieks leesboek', words: chap.words.map(w=>({greek:w.gr, nl:w.nl})), vocabOnly: true };
-  });
-  return renderOefenCategoryPicker(cats, null, (w)=>w.greek, undefined, undefined, undefined, 'EL');
-}
 
 function elAlfabetOefenen(){
   const wrapId = 'elmode-' + Math.random().toString(36).slice(2,8);
@@ -5680,6 +6457,68 @@ function initElAlfabetOefenen(wrapId){
       }
     });
   });
+}
+
+/* ================= GENERIEKE REGEL/GEBRUIK MEERKEUZE-QUIZ ================= */
+function renderMcQuiz(questions, title){
+  const wrapId = 'mcq-' + Math.random().toString(36).slice(2,8);
+  setTimeout(()=>initMcQuiz(wrapId, questions), 0);
+  return `<div id="${wrapId}">
+    <div class="quiz-card">
+      <div class="quiz-meta"><span data-role="mcq-score">Score: 0 / 0</span></div>
+      <p class="quiz-question" data-role="mcq-text"></p>
+      <div class="options" data-role="mcq-options"></div>
+      <p class="feedback" data-role="mcq-feedback"></p>
+      <button class="next-btn" data-role="mcq-next">Volgende vraag →</button>
+    </div>
+  </div>`;
+}
+function initMcQuiz(wrapId, questions){
+  const root = document.getElementById(wrapId);
+  if(!root) return;
+  const scoreEl = root.querySelector('[data-role="mcq-score"]');
+  const textEl = root.querySelector('[data-role="mcq-text"]');
+  const optsEl = root.querySelector('[data-role="mcq-options"]');
+  const feedbackEl = root.querySelector('[data-role="mcq-feedback"]');
+  const nextBtn = root.querySelector('[data-role="mcq-next"]');
+  let score=0, total=0, current=null, lastQ=null;
+
+  function pick(){
+    let q;
+    do { q = questions[Math.floor(Math.random()*questions.length)]; } while(questions.length>1 && q===lastQ);
+    lastQ = q;
+    return q;
+  }
+  function next(){
+    current = pick();
+    textEl.textContent = current.q;
+    feedbackEl.textContent=''; feedbackEl.className='feedback';
+    nextBtn.classList.remove('show');
+    optsEl.innerHTML = '';
+    optsEl.style.display = 'grid';
+    shuffle([...current.options]).forEach(opt=>{
+      const b = document.createElement('button');
+      b.className='opt'; b.textContent=opt;
+      b.addEventListener('click', ()=>answer(opt,b));
+      optsEl.appendChild(b);
+    });
+    scoreEl.textContent = `Score: ${score} / ${total}`;
+  }
+  function answer(val, btn){
+    const isCorrect = val===current.correct;
+    total++; if(isCorrect) score++;
+    Array.from(optsEl.children).forEach(b=>{
+      b.disabled=true;
+      if(b.textContent===current.correct) b.classList.add('correct');
+      else if(b===btn) b.classList.add('wrong');
+    });
+    feedbackEl.textContent = isCorrect ? 'Goed zo!' : (current.explain ? `Niet helemaal — ${current.explain}` : `Niet helemaal — het juiste antwoord was "${current.correct}".`);
+    feedbackEl.className = 'feedback ' + (isCorrect?'good':'bad');
+    scoreEl.textContent = `Score: ${score} / ${total}`;
+    nextBtn.classList.add('show');
+  }
+  nextBtn.addEventListener('click', next);
+  next();
 }
 
 function renderMatchingGame(){
@@ -5836,7 +6675,7 @@ function srsRecord(langCode, word, correct){
 
 function renderOefenCategoryPicker(cats, questionTemplate, lemmaFn, describeForm, mcOnly, noHints, langCode){
   const wrapId = 'oefen-' + Math.random().toString(36).slice(2,8);
-  setTimeout(()=>initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOnly, noHints), 0);
+  setTimeout(()=>initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOnly, noHints, langCode), 0);
   const singleCat = Object.keys(cats).length===1;
   const lc = langCode || 'taal';
   return `<div id="${wrapId}">
@@ -5861,6 +6700,7 @@ function renderOefenCategoryPicker(cats, questionTemplate, lemmaFn, describeForm
           <input type="text" class="text-input" data-role="text-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Typ je antwoord...">
           <button class="check-btn" data-role="check-btn">Controleer</button>
         </div>
+        <div data-role="el-keyboard-slot"></div>
         <p class="feedback" data-role="feedback"></p>
         <button class="next-btn" data-role="next-btn">Volgende vraag →</button>
       </div>
@@ -5868,7 +6708,7 @@ function renderOefenCategoryPicker(cats, questionTemplate, lemmaFn, describeForm
   </div>`;
 }
 
-function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOnly, noHints){
+function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOnly, noHints, langCode){
   const root = document.getElementById(wrapId);
   if(!root) return;
   const catGrid = root.querySelector('[data-role="cat-grid"]');
@@ -5884,6 +6724,7 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
   const checkBtn = root.querySelector('[data-role="check-btn"]');
   const feedbackEl = root.querySelector('[data-role="feedback"]');
   const nextBtn = root.querySelector('[data-role="next-btn"]');
+  const elKeyboardSlot = root.querySelector('[data-role="el-keyboard-slot"]');
   const scoreDisplay = root.querySelector('[data-role="score-display"]');
   const streakDisplay = root.querySelector('[data-role="streak-display"]');
 
@@ -6058,6 +6899,7 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
 
     if(current.answerMode==='mc'){
       inputRow.style.display='none';
+      if(elKeyboardSlot) elKeyboardSlot.innerHTML = '';
       optionsEl.style.display='grid';
       optionsEl.innerHTML = '';
       current.mcOptions.forEach(opt=>{
@@ -6070,6 +6912,10 @@ function initOefenen(wrapId, cats, questionTemplate, lemmaFn, describeForm, mcOn
       optionsEl.style.display='none';
       optionsEl.innerHTML = '';
       inputRow.style.display='flex';
+      if(elKeyboardSlot){
+        if(langCode==='EL') wireElKeyboard(elKeyboardSlot, textInput);
+        else elKeyboardSlot.innerHTML = '';
+      }
     }
   }
 
@@ -6216,14 +7062,12 @@ const SPECIAL_CONTENT = {
   'la-verbs': { leren:laVerbLeren, oefenen:laVerbOefenen },
   'de-nouns': { leren:deNounLeren, oefenen:deNounOefenen },
   'de-verbs': { leren:deVerbLeren, oefenen:deVerbOefenen },
-  'fr-verbs': { leren:frVerbLeren, oefenen:frVerbOefenen },
-  'el-nouns': { leren:elNounLeren, oefenen:elNounOefenen },
-  'el-verbs': { leren:elVerbLeren, oefenen:elVerbOefenen }
+  'fr-verbs': { leren:frVerbLeren, oefenen:frVerbOefenen }
 };
 
 function getChapters(lang){
   const chapters = [];
-  const vt = (title)=> 'Woorden ' + title;
+  const vt = (title)=> title;
   if(lang==='la'){
     chapters.push({ id:'la-nouns', title:'Naamvallen', special:'la-nouns' });
     chapters.push({ id:'la-verbs', title:'Vervoegingen', special:'la-verbs' });
@@ -6267,11 +7111,17 @@ function getChapters(lang){
     });
   } else if(lang==='el'){
     chapters.push({ id:'el-alf', title:'H1/2: het alfabet', subs:[{ title:'H1/2: het alfabet', words: elLetterWords(), itemLabel:'letter', matching:true, richLeren: elAlfabetLeren }] });
-    chapters.push({ id:'el-nouns', title:'Naamvallen', special:'el-nouns' });
-    chapters.push({ id:'el-verbs', title:'Vervoegingen', special:'el-verbs' });
-    EL_VOCAB.forEach((c,ci)=>{
-      const title = vt(c.title);
-      chapters.push({ id:'c'+ci, title, subs:[{ title, words: normWords(c.words,'gr') }] });
+    EL_VOCAB2.forEach(c=>{
+      const topics = EL_TOPICS_BY_HST[c.hst] || [];
+      const subs = [];
+      c.texts.forEach(t=>{
+        const letter = t.title.slice(-1);
+        subs.push({ title: t.title, words: normWords(t.words,'gr') });
+        topics.filter(tp=>tp.after===letter).forEach(tp=>{
+          subs.push({ title: tp.title, words: [], richLeren: tp.richLeren, richOefenen: tp.richOefenen });
+        });
+      });
+      chapters.push({ id:'c'+c.hst, title:`Hoofdstuk ${c.hst}`, subs });
     });
   }
   return chapters;
@@ -6401,7 +7251,7 @@ function renderLessonDetail(chapters){
   const { ci, si } = lessenSelection;
   const c = chapters[ci], s = c.subs[si];
   const matchBtn = s.matching ? `<button class="next-btn show" data-role="matching-btn" style="margin-left:8px;">Matching-spel →</button>` : '';
-  const oefenBtn = s.words.length ? `<button class="next-btn show" data-role="sub-oefen">Oefenen →</button>` : '';
+  const oefenBtn = (s.words.length || s.richOefenen) ? `<button class="next-btn show" data-role="sub-oefen">Oefenen →</button>` : '';
   const bodyHtml = s.richLeren
     ? s.richLeren()
     : `<h3>${c.title} — ${s.title}</h3>
@@ -6435,6 +7285,10 @@ function initLessonDetail(wrapId, chapters){
   const oefenBtn = root.querySelector('[data-role="sub-oefen"]');
   if(oefenBtn){
     oefenBtn.addEventListener('click', ()=>{
+      if(s.richOefenen){
+        root.querySelector('[data-role="sub-quiz"]').innerHTML = s.richOefenen();
+        return;
+      }
       root.querySelector('[data-role="sub-quiz"]').innerHTML = renderOefenCategoryPicker(
         { one: { title:s.title, sub:'', words:s.words, vocabOnly:true, srsLang:currentLang, itemLabel:s.itemLabel } },
         null, (w)=>w.target, undefined, undefined, undefined, currentLang.toUpperCase()
@@ -6604,6 +7458,7 @@ function renderToetsRunner(words, langCode, itemLabel, direction){
         <input type="text" class="text-input" data-role="tq-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Typ je antwoord...">
         <button class="check-btn" data-role="tq-check">Controleer</button>
       </div>
+      <div data-role="el-keyboard-slot"></div>
       <p class="feedback" data-role="tq-feedback"></p>
       <button class="next-btn" data-role="tq-next">Volgende →</button>
     </div>
@@ -6622,6 +7477,7 @@ function initToetsRunner(wrapId, words, langCode, itemLabel, direction){
   const checkBtn = root.querySelector('[data-role="tq-check"]');
   const feedbackEl = root.querySelector('[data-role="tq-feedback"]');
   const nextBtn = root.querySelector('[data-role="tq-next"]');
+  const elKeyboardSlot = root.querySelector('[data-role="el-keyboard-slot"]');
 
   // Elk woord komt hoogstens één keer voor in de toets.
   const wordPool = shuffle([...words]);
@@ -6657,6 +7513,7 @@ function initToetsRunner(wrapId, words, langCode, itemLabel, direction){
     inputEl.value=''; inputEl.disabled=false; checkBtn.disabled=false;
     if(current.mode==='mc'){
       inputRow.style.display='none';
+      if(elKeyboardSlot) elKeyboardSlot.innerHTML = '';
       optsEl.style.display='grid';
       optsEl.innerHTML='';
       current.mcOptions.forEach(opt=>{
@@ -6668,6 +7525,10 @@ function initToetsRunner(wrapId, words, langCode, itemLabel, direction){
     } else {
       optsEl.style.display='none'; optsEl.innerHTML='';
       inputRow.style.display='flex';
+      if(elKeyboardSlot){
+        if(langCode==='EL') wireElKeyboard(elKeyboardSlot, inputEl);
+        else elKeyboardSlot.innerHTML = '';
+      }
     }
   }
 
